@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "INIParser",
+	"Description": "Read/Write an INI file the unreal way!",
+	"Category": "Other",
+	"CreatedBy": "MrRobinOfficial",
+	"CreatedByURL": "https://github.com/MrRobinOfficial",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "INIParser",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
