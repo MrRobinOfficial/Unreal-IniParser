@@ -1,44 +1,31 @@
 // Copyright 2023 MrRobin. All Rights Reserved.
 
 #include "INILibrary.h"
+#include "Kismet/KismetStringLibrary.h"
 
-TArray<FString> UINILibrary::LoadINIFile(FString FilePath)
+static const char& COMMENT_CHAR = ';';
+static const char& SECTION_START_CHAR = '[';
+static const char& SECTION_END_CHAR = ']';
+static const char& TAB_CHAR = '\t';
+static const char& NEWLINE_CHAR = '\n';
+static const char& SPACE_CHAR = ' ';
+static const char& EMPTY_CHAR = '\0';
+static const char& EQUALS_CHAR = '=';
+
+static PropertyCollection EMPTY_PROPERTIES = PropertyCollection();
+static SectionCollection EMPTY_SECTIONS = SectionCollection();
+static FIniProperty EMPTY_PROPERTY = FIniProperty();
+static FIniSection EMPTY_SECTION = FIniSection();
+
+FIniData UINILibrary::ParseIniFile(FString ParseString)
 {
-	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*FilePath))
-		return TArray<FString>();
+	FIniData Result = FIniData();
 
-	TArray<FString> Result = TArray<FString>();
-	FFileHelper::LoadFileToStringArray(Result, *FilePath);
-	return Result;
-}
-
-bool UINILibrary::TryLoadINIFile(FString FilePath, TArray<FString>& OutContents)
-{
-	if (!FPlatformFileManager::Get().GetPlatformFile().FileExists(*FilePath))
-		return false;
-
-	return FFileHelper::LoadFileToStringArray(OutContents, *FilePath);
-}
-
-void UINILibrary::WriteINIFile(FString FilePath, TArray<FString> Contents)
-{
-	IPlatformFile& File = FPlatformFileManager::Get().GetPlatformFile();
-
-	FFileHelper::SaveStringArrayToFile(Contents, *FilePath);
-}
-
-bool UINILibrary::TryWriteINIFile(FString FilePath, TArray<FString> Contents)
-{
-	return FFileHelper::SaveStringArrayToFile(Contents, *FilePath);
-}
-
-TArray<FString> UINILibrary::ParseINIFile(FString Data)
-{
 	char Buffer[256];
-	*Buffer = '\0';
+	*Buffer = EMPTY_CHAR;
 
 	char CurrentSection[256];
-	*CurrentSection = '\0';
+	*CurrentSection = EMPTY_CHAR;
 
 	char CurrentKey[256];
 	char CurrentValue[256];
@@ -55,121 +42,394 @@ TArray<FString> UINILibrary::ParseINIFile(FString Data)
 	*/
 	int32_t State = 0;
 
-	for (auto It = Data.CreateConstIterator(); It; ++It)
+	for (auto It = ParseString.CreateConstIterator(); It; ++It)
 	{
-		char Char = Data[It.GetIndex()];
+		if (!ParseString.IsValidIndex(It.GetIndex()))
+			continue;
 
-		if (State == 0) // Waiting for .ini data
+		char Char = ParseString[It.GetIndex()];
+
+		switch (State)
 		{
-			if (Char == ';')
-				State = 1; // Start comment
-			else if (Char == '[')
-				State = 2; // Start section name
-			else if (Char != ' ' && Char != '\n' && Char != '\t')
-			{
-				AppendBuffer(Buffer, Char);
-				State = 3; // Start key
-			}
-		}
-		else if (State == 1) // Reading comment
-		{
-			if (Char == '\n')
-				State = 0; // End comment
-		}
-		else if (State == 2) // Section name started
-		{
-			if (Char == ']') // End section name
-			{
-				memcpy(CurrentSection, Buffer, 256 * sizeof(char));
-				*Buffer = '\0';
-				State = 0;
-			}
-			else if (Char == '\n') // Invalid section name (discard)
-			{
-				*Buffer = '\0';
-				State = 0;
-			}
-			else
-				AppendBuffer(Buffer, Char);
-		}
-		else if (State == 3) // Key started
-		{
-			if (Char == ' ' || Char == '\t')
-			{
-				memcpy(CurrentKey, Buffer, 256 * sizeof(char));
-				*Buffer = '\0';
-				State = 4; // End key
-			}
-			else if (Char == '\n') // Invalid key (discard)
-				State = 0;
-			else
-				AppendBuffer(Buffer, Char);
-		}
-		else if (State == 4) // End of key
-		{
-			if (Char == '=')
-				State = 5; // Ready for value
-			else if (Char == '\n')
-				State = 0; // Invalid key value
-			else if (Char != ' ' && Char != '\t')
-				State = 7; // Invalid key format
-		}
-		else if (State == 5) // Ready for value
-		{
-			if (Char == '\n')
-				State = 0; // Invalid key value
-			else if (Char != ' ' && Char != '\t')
-			{
-				AppendBuffer(Buffer, Char);
-				State = 6; // Begin value
-			}
-		}
-		else if (State == 6) // Start of value
-		{
-			if (Char == '\n')
-			{
-				TrimBuffer(Buffer);
-				memcpy(CurrentValue, Buffer, 256 * sizeof(char));
-				*Buffer = '\0';
-				State = 0;
-			}
-			else
-				AppendBuffer(Buffer, Char);
-		}
-		else if (State == 7) // Invalid key format
-		{
-			if (Char == '\n')
-				State = 0;
+			// Waiting for .ini data
+			case 0:
+				switch (Char)
+				{
+					case COMMENT_CHAR:
+						State = 1; // Start comment
+						break;
+
+					case SECTION_START_CHAR:
+						State = 2; // Start section name
+						break;
+
+					// Valid spacings
+					case SPACE_CHAR:
+					case NEWLINE_CHAR:
+					case TAB_CHAR:
+						break;
+
+					default:
+						AppendBuffer(Buffer, Char);
+						State = 3; // Start key
+						break;
+				}
+				break;
+
+			// Reading comment
+			case 1:
+				if (Char == NEWLINE_CHAR) State = 0; // End comment
+				break;
+
+			// Section name started
+			case 2:
+				switch (Char)
+				{
+					// End section name
+					case SECTION_END_CHAR:
+						strcpy_s(CurrentSection, 256, Buffer);
+						*Buffer = EMPTY_CHAR;
+						State = 0;
+						break;
+
+					// Invalid section name (discard)
+					case NEWLINE_CHAR:
+						*Buffer = EMPTY_CHAR;
+						State = 0;
+						break;
+
+					default:
+						AppendBuffer(Buffer, Char);
+						break;
+				}
+				break;
+
+			// Key started
+			case 3:
+				switch (Char)
+				{
+					case SPACE_CHAR:
+					case TAB_CHAR:
+						strcpy_s(CurrentKey, 256, Buffer);
+						*Buffer = EMPTY_CHAR;
+						State = 4; // End key
+						break;
+
+					// Invalid key (discard)
+					case NEWLINE_CHAR:
+						State = 0;
+						break;
+
+					default:
+						AppendBuffer(Buffer, Char);
+						break;
+				}		
+				break;
+
+			// End of key
+			case 4:
+				switch (Char)
+				{
+					case EQUALS_CHAR:
+						State = 5; // Ready for value
+						break;
+
+					case NEWLINE_CHAR:
+						State = 0; // Invalid key value
+						break;
+
+					case SPACE_CHAR:
+					case TAB_CHAR:
+						break;
+
+					default:
+						State = 7; // Invalid key format
+						break;
+				}
+				break;
+
+			// Ready for value
+			case 5:
+				switch (Char)
+				{
+					case NEWLINE_CHAR:
+						State = 0; // Invalid key value
+						break;
+
+					case SPACE_CHAR:
+					case TAB_CHAR:
+						break;
+
+					default:
+						AppendBuffer(Buffer, Char);
+						State = 6; // Begin value
+						break;
+				}
+				break;
+
+			// Start of value
+			case 6:
+				if (Char == NEWLINE_CHAR)
+				{
+					TrimBuffer(Buffer);
+					strcpy_s(CurrentValue, 256, Buffer);
+					*Buffer = EMPTY_CHAR;
+					State = 0;
+
+					FIniSection& Section = Result.FindOrAddSectionByName(CurrentSection);
+					Section.AddProperty(FIniProperty(CurrentKey, CurrentValue));
+					
+					//if (Result.TryFindOrAddSectionByName(CurrentSection, Section))
+				}
+				else
+					AppendBuffer(Buffer, Char);
+				break;
+
+			// Invalid key format
+			case 7:
+				if (Char == NEWLINE_CHAR) State = 0;
+				break;
 		}
 	}
 
-	return TArray<FString>();
+	return Result;
 }
 
-bool UINILibrary::TryParseINIFile(FString Data, TArray<FString>& OutContents)
+FIniData UINILibrary::MakeIniDataStruct(
+	TMap<FString, FIniSection> Sections,
+	TMap<FString, FIniProperty> Properties)
 {
-	return false;
+	/*return FIniData(Sections, Properties);*/
+
+	return FIniData();
 }
 
-void UINILibrary::AppendBuffer(char* Buffer, const char Char)
+FString UINILibrary::Conv_IniDataToString(const FIniData& Data) { return Data.ToString(); }
+
+void UINILibrary::AppendBuffer(char* Buffer, char Char)
 {
-	char* CharPtr;
-
-	for (CharPtr = Buffer; *CharPtr; CharPtr++);
-
-	CharPtr[0] = Char;
-	CharPtr[1] = '\0';
+	char str[2] = { Char, EMPTY_CHAR };
+	strcat_s(Buffer, 256, str);
 }
 
 void UINILibrary::TrimBuffer(char* Buffer)
 {
-	char* CharPtr;
+	char* Char = &Buffer[strlen(Buffer) - 1];
 
-	for (CharPtr = Buffer; CharPtr[1] != '\0'; CharPtr++);
-
-	while (*CharPtr == ' ' || *CharPtr == '\t')
+	if (*Char == SPACE_CHAR || *Char == TAB_CHAR)
 	{
-		*CharPtr = '\0';
-		CharPtr--;
+		*Char = EMPTY_CHAR;
+		TrimBuffer(Buffer);
 	}
+}
+
+void FIniData::AddSection(FIniSection Section, bool bOverwriteValueIfExist)
+{
+	if (Sections.Contains(Section.GetSectionName()) && !bOverwriteValueIfExist)
+		return;
+
+	Sections.Add(Section.GetSectionName(), Section);
+}
+
+bool FIniData::DoesSectionExist(const FString& Name) const { return Sections.Contains(Name); }
+
+bool FIniData::TryFindSectionByName(FString Name, FIniSection*& OutSection)
+{
+	if (Name.IsEmpty())
+		return false;
+
+	OutSection = Sections.Find(Name);
+	return OutSection != nullptr;
+}
+
+bool FIniData::TryFindOrAddSectionByName(FString Name, FIniSection& OutSection)
+{
+	if (Name.IsEmpty())
+		return false;
+
+	OutSection = Sections.FindOrAdd(Name, FIniSection(Name));
+	return true;
+}
+
+FIniSection& FIniData::FindOrAddSectionByName(FString Name)
+{
+	return Sections.FindOrAdd(Name, FIniSection(Name));
+}
+
+void FIniSection::AddProperty(FIniProperty Property, bool bOverwriteValueIfExist)
+{
+	if (Properties.Contains(Property.GetKeyName()) && !bOverwriteValueIfExist)
+		return;
+
+	Properties.Add(Property.GetKeyName(), Property);
+}
+
+bool FIniSection::DoesPropertyExist(const FString& Name) const { return Properties.Contains(Name); }
+
+bool FIniSection::TryFindPropertyByName(FString Name, FIniProperty*& OutProperty)
+{
+	OutProperty = nullptr;
+
+	if (Name.IsEmpty())
+		return false;
+
+	OutProperty = Properties.Find(Name);
+	return OutProperty != nullptr;
+}
+
+bool FIniSection::TryFindOrAddPropertyByName(FString Name, FIniProperty& OutProperty)
+{
+	if (Name.IsEmpty())
+		return false;
+
+	OutProperty = Properties.FindOrAdd(Name, FIniProperty(Name));
+	return true;
+}
+
+FIniProperty& FIniSection::FindOrAddPropertyByName(FString Name)
+{
+	return Properties.FindOrAdd(Name, FIniProperty(Name));
+}
+
+FORCEINLINE FString FIniSection::ToString() const { return SectionName; }
+
+FORCEINLINE FString FIniProperty::ToString() const { return FString::Printf(TEXT("%s=%s"), *KeyName, *Value); }
+
+void FIniProperty::operator=(const uint8_t& NewValue) { Value = UKismetStringLibrary::Conv_ByteToString(NewValue); }
+void FIniProperty::operator=(const int& NewValue) { Value = UKismetStringLibrary::Conv_IntToString(NewValue); }
+void FIniProperty::operator=(const int64& NewValue) { Value = UKismetStringLibrary::Conv_Int64ToString(NewValue); }
+void FIniProperty::operator=(const FIntPoint& NewValue) { Value = UKismetStringLibrary::Conv_IntPointToString(NewValue); }
+void FIniProperty::operator=(const bool& NewValue) { Value = UKismetStringLibrary::Conv_BoolToString(NewValue); }
+void FIniProperty::operator=(const double& NewValue) { Value = UKismetStringLibrary::Conv_DoubleToString(NewValue); }
+void FIniProperty::operator=(const float& NewValue) { Value = FString::SanitizeFloat(NewValue); }
+void FIniProperty::operator=(const FVector& NewValue) { Value = UKismetStringLibrary::Conv_VectorToString(NewValue); }
+void FIniProperty::operator=(const FVector3f& NewValue) { Value = UKismetStringLibrary::Conv_Vector3fToString(NewValue); }
+void FIniProperty::operator=(const FVector2D& NewValue) { Value = UKismetStringLibrary::Conv_Vector2dToString(NewValue); }
+void FIniProperty::operator=(const FIntVector& NewValue) { Value = UKismetStringLibrary::Conv_IntVectorToString(NewValue); }
+void FIniProperty::operator=(const FRotator& NewValue) { Value = UKismetStringLibrary::Conv_RotatorToString(NewValue); }
+void FIniProperty::operator=(const FMatrix& NewValue) { Value = UKismetStringLibrary::Conv_MatrixToString(NewValue); }
+void FIniProperty::operator=(const FName& NewValue) { Value = UKismetStringLibrary::Conv_NameToString(NewValue); }
+void FIniProperty::operator=(const FString& NewValue) { Value = NewValue; }
+void FIniProperty::operator=(const FText& NewValue) { Value = NewValue.ToString(); }
+void FIniProperty::operator=(UObject* NewValue) { Value = UKismetStringLibrary::Conv_ObjectToString(NewValue); }
+void FIniProperty::operator=(const FTransform& NewValue) { Value = UKismetStringLibrary::Conv_TransformToString(NewValue); }
+void FIniProperty::operator=(const FLinearColor& NewValue) { Value = UKismetStringLibrary::Conv_ColorToString(NewValue); }
+void FIniProperty::operator=(const FInputDeviceId& NewValue) { Value = UKismetStringLibrary::Conv_InputDeviceIdToString(NewValue); }
+void FIniProperty::operator=(const FPlatformUserId& NewValue) { Value = UKismetStringLibrary::Conv_PlatformUserIdToString(NewValue); }
+
+FIniProperty::operator FString() const { return GetValue(); }
+
+FORCEINLINE FString FIniData::ToString() const
+{
+	FString StringResult;
+
+	StringResult += TEXT("\n=== .Ini Data ===\n");
+
+	StringResult += TEXT("\n=== Sections ===\n");
+
+	for (auto& Section : Sections)
+	{
+		StringResult += FString::Printf(TEXT("\n=== %s ===\n"), *Section.Key);
+
+		TArray<FString> Array;
+
+		for (auto& Property : Section.Value.GetProperties())
+			Array.Add(Property.Value.ToString());
+
+		StringResult += FString::Printf(TEXT("%s\n"),
+			*(UKismetStringLibrary::JoinStringArray(Array, TEXT("\n")))
+		);
+	}
+
+	return StringResult;
+}
+
+FIniSection& FIniData::operator[](const FString& SectionName)
+{
+	//if (!Sections.Contains(SectionName))
+	//{
+	//	if (false)
+	//		Sections.Add(SectionName);
+	//	else
+	//		return EMPTY_SECTION;
+	//}
+
+	if (!Sections.Contains(SectionName))
+		return EMPTY_SECTION;
+
+	UE_LOG(LogTemp, Warning, TEXT("Works = %s"), *SectionName);
+
+	return Sections[SectionName];
+}
+
+FIniProperty& FIniSection::operator[](const FString& PropertyName)
+{
+	//if (!Properties.Contains(PropertyName))
+	//{
+	//	// TODO: Add to map
+	//	return EMPTY_PROPERTY;
+	//}
+
+	//if (!Properties.Contains(PropertyName))
+	//	return EMPTY_PROPERTY;
+
+	//UE_LOG(LogTemp, Warning, TEXT("Working = %s"), *PropertyName);
+
+	//Properties[GetKeyName()]
+
+	return Properties[PropertyName];
+}
+
+const FString UINILibrary::ReadValueAsStringFromIniData(
+	FIniData& Data,
+	FString SectionName,
+	FString PropertyName)
+{
+	//if (!Data.DoesSectionExist(SectionName))
+	//	return FString();
+
+	//if (!Data[SectionName].DoesPropertyExist(PropertyName))
+	//	return FString();
+
+	return Data[SectionName][PropertyName];
+}
+
+void UINILibrary::WriteValueAsStringFromIniData(
+	FIniData& Data,
+	FString SectionName,
+	FString PropertyName,
+	FString NewValue)
+{
+	if (!Data.DoesSectionExist(SectionName))
+		return;
+
+	if (!Data[SectionName].DoesPropertyExist(PropertyName))
+		return;
+
+	Data[SectionName][PropertyName] = NewValue;
+}
+
+bool UINILibrary::TryGetSectionFromIniData(FIniData& Data, FString SectionName, FIniSection& OutSection)
+{
+	FIniSection* Ptr = nullptr;
+	bool bResult = Data.TryFindSectionByName(SectionName, Ptr);
+
+	OutSection = *Ptr;
+	return bResult;
+}
+
+bool UINILibrary::TryGetPropertyFromIniSection(FIniSection& Section, FString PropertyName, FIniProperty& OutProperty)
+{
+	FIniProperty* Ptr = nullptr;
+	bool bResult = Section.TryFindPropertyByName(PropertyName, Ptr);
+
+	OutProperty = *Ptr;
+	return bResult;
+}
+
+TArray<FIniProperty> UINILibrary::GetAllPropertiesFromIniData(FIniData& Data, FString PropertyName)
+{
+	// TODO: Get all properties as TArray<FIniProperty> (casting from TMap)
+
+	return TArray<FIniProperty>();
 }
