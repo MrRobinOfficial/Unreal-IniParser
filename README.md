@@ -1,11 +1,11 @@
 <!-- markdownlint-disable-next-line -->
 <p align="center">
-  <a href="#" rel="noopener" target="_blank"><img width="150" src="/Resources/Icon128.png" alt="INIParser logo"></a>
+  <a href="#" rel="noopener" target="_blank"><img width="150" src="/Resources/Icon128.png" alt="IniParser logo"></a>
 </p>
 
-<h1 align="center">INIParser [Unreal Engine]</h1>
+<h1 align="center">IniParser [Unreal Engine]</h1>
 
-*Read/Write an INI file the unreal way!*
+*Read/Write an .Ini file the unreal way!*
 
 <div align="center">
   
