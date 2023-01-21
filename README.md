@@ -26,7 +26,7 @@ Nunc consequat diam id turpis imperdiet, id tempus turpis dictum. Vestibulum non
 
 #
 
-## Supported Platforms
+## ⚙️ Supported Platforms
 This plug-in was last built against Unreal Engine 5.1. It should work on all platforms, since it made with raw c++ code and basic Unreal Engine features.
 
 ## 📝 Quick guide
