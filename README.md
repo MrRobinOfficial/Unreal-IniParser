@@ -26,7 +26,7 @@ Nunc consequat diam id turpis imperdiet, id tempus turpis dictum. Vestibulum non
 
 <details open> 
     <summary><h2>🖼️ Screenshots</h2></summary>
-    <img src="Resources/Screenshot01.png" alt="Overview of Blueprint nodes from .Ini Library">
+    <img src="Resources/Screenshot_01.png" alt="Overview of Blueprint nodes from .Ini Library">
 </details>
 
 #
