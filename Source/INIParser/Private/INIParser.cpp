@@ -1,15 +1,15 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "INIParser.h"
+#include "IniParser.h"
 
-#define LOCTEXT_NAMESPACE "FINIParserModule"
+#define LOCTEXT_NAMESPACE "FIniParserModule"
 
-void FINIParserModule::StartupModule()
+void FIniParserModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 }
 
-void FINIParserModule::ShutdownModule()
+void FIniParserModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
@@ -17,4 +17,4 @@ void FINIParserModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FINIParserModule, INIParser)
+IMPLEMENT_MODULE(FIniParserModule, IniParser)

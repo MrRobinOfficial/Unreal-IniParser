@@ -1,11 +1,11 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2023 MrRobin. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
-class FINIParserModule : public IModuleInterface
+class FIniParserModule : public IModuleInterface
 {
 public:
 

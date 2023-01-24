@@ -1,6 +1,6 @@
 // Copyright 2023 MrRobin. All Rights Reserved.
 
-#include "INILibrary.h"
+#include "IniLibrary.h"
 #include "Kismet/KismetStringLibrary.h"
 
 static const char& COMMENT_CHAR = ';';
@@ -12,12 +12,7 @@ static const char& SPACE_CHAR = ' ';
 static const char& EMPTY_CHAR = '\0';
 static const char& EQUALS_CHAR = '=';
 
-static PropertyCollection EMPTY_PROPERTIES = PropertyCollection();
-static SectionCollection EMPTY_SECTIONS = SectionCollection();
-static FIniProperty EMPTY_PROPERTY = FIniProperty();
-static FIniSection EMPTY_SECTION = FIniSection();
-
-FIniData UINILibrary::ParseIniFile(FString ParseString)
+FIniData UIniLibrary::ParseIniString(FString String)
 {
 	FIniData Result = FIniData();
 
@@ -42,12 +37,12 @@ FIniData UINILibrary::ParseIniFile(FString ParseString)
 	*/
 	int32_t State = 0;
 
-	for (auto It = ParseString.CreateConstIterator(); It; ++It)
+	for (auto It = String.CreateConstIterator(); It; ++It)
 	{
-		if (!ParseString.IsValidIndex(It.GetIndex()))
+		if (!String.IsValidIndex(It.GetIndex()))
 			continue;
 
-		char Char = ParseString[It.GetIndex()];
+		char Char = String[It.GetIndex()];
 
 		switch (State)
 		{
@@ -176,10 +171,8 @@ FIniData UINILibrary::ParseIniFile(FString ParseString)
 					*Buffer = EMPTY_CHAR;
 					State = 0;
 
-					FIniSection& Section = Result.FindOrAddSectionByName(CurrentSection);
-					Section.AddProperty(FIniProperty(CurrentKey, CurrentValue));
-					
-					//if (Result.TryFindOrAddSectionByName(CurrentSection, Section))
+					FIniSection& Section = Result.AddSection(CurrentSection);
+					Section.AddProperty(CurrentKey, CurrentValue);
 				}
 				else
 					AppendBuffer(Buffer, Char);
@@ -195,24 +188,16 @@ FIniData UINILibrary::ParseIniFile(FString ParseString)
 	return Result;
 }
 
-FIniData UINILibrary::MakeIniDataStruct(
-	TMap<FString, FIniSection> Sections,
-	TMap<FString, FIniProperty> Properties)
+void UIniLibrary::AppendBuffer(char* Buffer, char Char)
 {
-	/*return FIniData(Sections, Properties);*/
+	if (iscntrl(Char))
+		return;
 
-	return FIniData();
-}
-
-FString UINILibrary::Conv_IniDataToString(const FIniData& Data) { return Data.ToString(); }
-
-void UINILibrary::AppendBuffer(char* Buffer, char Char)
-{
 	char str[2] = { Char, EMPTY_CHAR };
 	strcat_s(Buffer, 256, str);
 }
 
-void UINILibrary::TrimBuffer(char* Buffer)
+void UIniLibrary::TrimBuffer(char* Buffer)
 {
 	char* Char = &Buffer[strlen(Buffer) - 1];
 
@@ -223,213 +208,105 @@ void UINILibrary::TrimBuffer(char* Buffer)
 	}
 }
 
-void FIniData::AddSection(FIniSection Section, bool bOverwriteValueIfExist)
+FIniData UIniLibrary::MakeIniDataStruct(
+	TMap<FString, FIniSection> Sections)
 {
-	if (Sections.Contains(Section.GetSectionName()) && !bOverwriteValueIfExist)
-		return;
-
-	Sections.Add(Section.GetSectionName(), Section);
+	return FIniData(Sections);
 }
 
-bool FIniData::DoesSectionExist(const FString& Name) const { return Sections.Contains(Name); }
+FString UIniLibrary::Conv_IniDataToString(const FIniData& Data) { return Data.ToString(); }
 
-bool FIniData::TryFindSectionByName(FString Name, FIniSection*& OutSection)
+void UIniLibrary::GetSection(FIniData& Data, FString SectionName, FIniSection& OutSection)
 {
-	if (Name.IsEmpty())
-		return false;
-
-	OutSection = Sections.Find(Name);
-	return OutSection != nullptr;
+	OutSection = Data.GetSection(SectionName);
 }
 
-bool FIniData::TryFindOrAddSectionByName(FString Name, FIniSection& OutSection)
+bool UIniLibrary::GetTrySection(FIniData& Data, FString SectionName, FIniSection& OutSection)
 {
-	if (Name.IsEmpty())
-		return false;
-
-	OutSection = Sections.FindOrAdd(Name, FIniSection(Name));
-	return true;
+	return Data.TryGetSection(SectionName, OutSection);
 }
 
-FIniSection& FIniData::FindOrAddSectionByName(FString Name)
+void UIniLibrary::GetProperty(FIniSection& Section, FString PropertyName, FIniProperty& OutProperty)
 {
-	return Sections.FindOrAdd(Name, FIniSection(Name));
+	OutProperty = Section.GetProperty(PropertyName);
 }
 
-void FIniSection::AddProperty(FIniProperty Property, bool bOverwriteValueIfExist)
+bool UIniLibrary::GetTryProperty(FIniSection& Section, FString PropertyName, FIniProperty& OutProperty)
 {
-	if (Properties.Contains(Property.GetKeyName()) && !bOverwriteValueIfExist)
-		return;
-
-	Properties.Add(Property.GetKeyName(), Property);
+	return Section.TryGetProperty(PropertyName, OutProperty);
 }
 
-bool FIniSection::DoesPropertyExist(const FString& Name) const { return Properties.Contains(Name); }
-
-bool FIniSection::TryFindPropertyByName(FString Name, FIniProperty*& OutProperty)
+void UIniLibrary::GetValueAsInt32(FIniProperty& Property, int32& Value)
 {
-	OutProperty = nullptr;
-
-	if (Name.IsEmpty())
-		return false;
-
-	OutProperty = Properties.Find(Name);
-	return OutProperty != nullptr;
+	Value = UKismetStringLibrary::Conv_StringToInt(Property.GetValue());
 }
 
-bool FIniSection::TryFindOrAddPropertyByName(FString Name, FIniProperty& OutProperty)
+void UIniLibrary::GetValueAsInt64(FIniProperty& Property, int64& Value)
 {
-	if (Name.IsEmpty())
-		return false;
-
-	OutProperty = Properties.FindOrAdd(Name, FIniProperty(Name));
-	return true;
+	Value = UKismetStringLibrary::Conv_StringToInt64(Property.GetValue());
 }
 
-FIniProperty& FIniSection::FindOrAddPropertyByName(FString Name)
+void UIniLibrary::GetValueAsBoolean(FIniProperty& Property, bool& Value)
 {
-	return Properties.FindOrAdd(Name, FIniProperty(Name));
+	Value = Property.GetValue().ToBool();
 }
 
-FORCEINLINE FString FIniSection::ToString() const { return SectionName; }
-
-FORCEINLINE FString FIniProperty::ToString() const { return FString::Printf(TEXT("%s=%s"), *KeyName, *Value); }
-
-void FIniProperty::operator=(const uint8_t& NewValue) { Value = UKismetStringLibrary::Conv_ByteToString(NewValue); }
-void FIniProperty::operator=(const int& NewValue) { Value = UKismetStringLibrary::Conv_IntToString(NewValue); }
-void FIniProperty::operator=(const int64& NewValue) { Value = UKismetStringLibrary::Conv_Int64ToString(NewValue); }
-void FIniProperty::operator=(const FIntPoint& NewValue) { Value = UKismetStringLibrary::Conv_IntPointToString(NewValue); }
-void FIniProperty::operator=(const bool& NewValue) { Value = UKismetStringLibrary::Conv_BoolToString(NewValue); }
-void FIniProperty::operator=(const double& NewValue) { Value = UKismetStringLibrary::Conv_DoubleToString(NewValue); }
-void FIniProperty::operator=(const float& NewValue) { Value = FString::SanitizeFloat(NewValue); }
-void FIniProperty::operator=(const FVector& NewValue) { Value = UKismetStringLibrary::Conv_VectorToString(NewValue); }
-void FIniProperty::operator=(const FVector3f& NewValue) { Value = UKismetStringLibrary::Conv_Vector3fToString(NewValue); }
-void FIniProperty::operator=(const FVector2D& NewValue) { Value = UKismetStringLibrary::Conv_Vector2dToString(NewValue); }
-void FIniProperty::operator=(const FIntVector& NewValue) { Value = UKismetStringLibrary::Conv_IntVectorToString(NewValue); }
-void FIniProperty::operator=(const FRotator& NewValue) { Value = UKismetStringLibrary::Conv_RotatorToString(NewValue); }
-void FIniProperty::operator=(const FMatrix& NewValue) { Value = UKismetStringLibrary::Conv_MatrixToString(NewValue); }
-void FIniProperty::operator=(const FName& NewValue) { Value = UKismetStringLibrary::Conv_NameToString(NewValue); }
-void FIniProperty::operator=(const FString& NewValue) { Value = NewValue; }
-void FIniProperty::operator=(const FText& NewValue) { Value = NewValue.ToString(); }
-void FIniProperty::operator=(UObject* NewValue) { Value = UKismetStringLibrary::Conv_ObjectToString(NewValue); }
-void FIniProperty::operator=(const FTransform& NewValue) { Value = UKismetStringLibrary::Conv_TransformToString(NewValue); }
-void FIniProperty::operator=(const FLinearColor& NewValue) { Value = UKismetStringLibrary::Conv_ColorToString(NewValue); }
-void FIniProperty::operator=(const FInputDeviceId& NewValue) { Value = UKismetStringLibrary::Conv_InputDeviceIdToString(NewValue); }
-void FIniProperty::operator=(const FPlatformUserId& NewValue) { Value = UKismetStringLibrary::Conv_PlatformUserIdToString(NewValue); }
-
-FIniProperty::operator FString() const { return GetValue(); }
-
-FORCEINLINE FString FIniData::ToString() const
+void UIniLibrary::GetValueAsDouble(FIniProperty& Property, double& Value)
 {
-	FString StringResult;
-
-	StringResult += TEXT("\n=== .Ini Data ===\n");
-
-	StringResult += TEXT("\n=== Sections ===\n");
-
-	for (auto& Section : Sections)
-	{
-		StringResult += FString::Printf(TEXT("\n=== %s ===\n"), *Section.Key);
-
-		TArray<FString> Array;
-
-		for (auto& Property : Section.Value.GetProperties())
-			Array.Add(Property.Value.ToString());
-
-		StringResult += FString::Printf(TEXT("%s\n"),
-			*(UKismetStringLibrary::JoinStringArray(Array, TEXT("\n")))
-		);
-	}
-
-	return StringResult;
+	Value = UKismetStringLibrary::Conv_StringToDouble(Property.GetValue());
 }
 
-FIniSection& FIniData::operator[](const FString& SectionName)
+void UIniLibrary::GetValueAsFloat(FIniProperty& Property, float& Value)
 {
-	//if (!Sections.Contains(SectionName))
-	//{
-	//	if (false)
-	//		Sections.Add(SectionName);
-	//	else
-	//		return EMPTY_SECTION;
-	//}
-
-	if (!Sections.Contains(SectionName))
-		return EMPTY_SECTION;
-
-	UE_LOG(LogTemp, Warning, TEXT("Works = %s"), *SectionName);
-
-	return Sections[SectionName];
+	Value = UKismetStringLibrary::Conv_StringToDouble(Property.GetValue());
 }
 
-FIniProperty& FIniSection::operator[](const FString& PropertyName)
+void UIniLibrary::GetValueAsVector(FIniProperty& Property, FVector& Value, bool& OutIsValid)
 {
-	//if (!Properties.Contains(PropertyName))
-	//{
-	//	// TODO: Add to map
-	//	return EMPTY_PROPERTY;
-	//}
-
-	//if (!Properties.Contains(PropertyName))
-	//	return EMPTY_PROPERTY;
-
-	//UE_LOG(LogTemp, Warning, TEXT("Working = %s"), *PropertyName);
-
-	//Properties[GetKeyName()]
-
-	return Properties[PropertyName];
+	UKismetStringLibrary::Conv_StringToVector(Property.GetValue(), Value, OutIsValid);
 }
 
-const FString UINILibrary::ReadValueAsStringFromIniData(
-	FIniData& Data,
-	FString SectionName,
-	FString PropertyName)
+void UIniLibrary::GetValueAsVector3f(FIniProperty& Property, FVector3f& Value, bool& OutIsValid)
 {
-	//if (!Data.DoesSectionExist(SectionName))
-	//	return FString();
-
-	//if (!Data[SectionName].DoesPropertyExist(PropertyName))
-	//	return FString();
-
-	return Data[SectionName][PropertyName];
+	UKismetStringLibrary::Conv_StringToVector3f(Property.GetValue(), Value, OutIsValid);
 }
 
-void UINILibrary::WriteValueAsStringFromIniData(
-	FIniData& Data,
-	FString SectionName,
-	FString PropertyName,
-	FString NewValue)
+void UIniLibrary::GetValueAsVector2D(FIniProperty& Property, FVector2D& Value, bool& OutIsValid)
 {
-	if (!Data.DoesSectionExist(SectionName))
-		return;
-
-	if (!Data[SectionName].DoesPropertyExist(PropertyName))
-		return;
-
-	Data[SectionName][PropertyName] = NewValue;
+	UKismetStringLibrary::Conv_StringToVector2D(Property.GetValue(), Value, OutIsValid);
 }
 
-bool UINILibrary::TryGetSectionFromIniData(FIniData& Data, FString SectionName, FIniSection& OutSection)
+void UIniLibrary::GetValueAsRotator(FIniProperty& Property, FRotator& Value, bool& OutIsValid)
 {
-	FIniSection* Ptr = nullptr;
-	bool bResult = Data.TryFindSectionByName(SectionName, Ptr);
-
-	OutSection = *Ptr;
-	return bResult;
+	UKismetStringLibrary::Conv_StringToRotator(Property.GetValue(), Value, OutIsValid);
 }
 
-bool UINILibrary::TryGetPropertyFromIniSection(FIniSection& Section, FString PropertyName, FIniProperty& OutProperty)
+void UIniLibrary::GetValueAsName(FIniProperty& Property, FName& Value)
 {
-	FIniProperty* Ptr = nullptr;
-	bool bResult = Section.TryFindPropertyByName(PropertyName, Ptr);
-
-	OutProperty = *Ptr;
-	return bResult;
+	Value = UKismetStringLibrary::Conv_StringToName(Property.GetValue());
 }
 
-TArray<FIniProperty> UINILibrary::GetAllPropertiesFromIniData(FIniData& Data, FString PropertyName)
+void UIniLibrary::GetValueAsString(FIniProperty& Property, FString& Value)
 {
-	// TODO: Get all properties as TArray<FIniProperty> (casting from TMap)
+	Value = Property.GetValue();
+}
 
-	return TArray<FIniProperty>();
+void UIniLibrary::GetValueAsText(FIniProperty& Property, FText& Value)
+{
+	Value = FText::FromString(Property.GetValue());
+}
+
+void UIniLibrary::GetValueAsLinearColor(FIniProperty& Property, FLinearColor& Value, bool& OutIsValid)
+{
+	UKismetStringLibrary::Conv_StringToColor(Property.GetValue(), Value, OutIsValid);
+}
+
+void UIniLibrary::GetSections(FIniData& Data, TArray<FIniSection>& OutArray)
+{
+	Data.GetSections().GenerateValueArray(OutArray);
+}
+
+void UIniLibrary::GetProperties(FIniSection& Section, TArray<FIniProperty>& OutArray)
+{
+	Section.GetProperties().GenerateValueArray(OutArray);
 }

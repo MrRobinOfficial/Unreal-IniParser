@@ -1,10 +1,10 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2023 MrRobin. All Rights Reserved.
 
 using UnrealBuildTool;
 
-public class INIParser : ModuleRules
+public class IniParser : ModuleRules
 {
-	public INIParser(ReadOnlyTargetRules Target) : base(Target)
+	public IniParser(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
