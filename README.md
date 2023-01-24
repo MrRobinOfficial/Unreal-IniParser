@@ -47,3 +47,4 @@ If you have any questions or issue, just write either to my [YouTube channel](ht
 
 ## 🔗 References
 - [Introduction to Unreal Engine Plugins](https://docs.unrealengine.com/5.0/en-US/plugins-in-unreal-engine/)
+- [Introduction to .ini file format](https://en.wikipedia.org/wiki/INI_file)
