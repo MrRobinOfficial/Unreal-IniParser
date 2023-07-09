@@ -3,16 +3,20 @@
 #include "IniLibrary.h"
 #include "Kismet/KismetStringLibrary.h"
 
+DEFINE_LOG_CATEGORY(LogIniParser);
+
 static const char& COMMENT_CHAR = ';';
 static const char& SECTION_START_CHAR = '[';
 static const char& SECTION_END_CHAR = ']';
+static const char& DOUBLE_QUOTE_CHAR = '\"';
+static const char& APOSTROPHE_CHAR = '\'';
 static const char& TAB_CHAR = '\t';
 static const char& NEWLINE_CHAR = '\n';
 static const char& SPACE_CHAR = ' ';
 static const char& EMPTY_CHAR = '\0';
 static const char& EQUALS_CHAR = '=';
 
-FIniData UIniLibrary::ParseIniString(FString String)
+FIniData UIniLibrary::ParseIniFromString(FString String)
 {
 	FIniData Result = FIniData();
 
@@ -24,6 +28,7 @@ FIniData UIniLibrary::ParseIniString(FString String)
 
 	char CurrentKey[256];
 	char CurrentValue[256];
+	char CurrentComment[256];
 
 	/*
 	* 0 - Ready for .Ini data
@@ -52,6 +57,8 @@ FIniData UIniLibrary::ParseIniString(FString String)
 				{
 					case COMMENT_CHAR:
 						State = 1; // Start comment
+
+						continue; // Skip one character!
 						break;
 
 					case SECTION_START_CHAR:
@@ -73,7 +80,24 @@ FIniData UIniLibrary::ParseIniString(FString String)
 
 			// Reading comment
 			case 1:
-				if (Char == NEWLINE_CHAR) State = 0; // End comment
+				if (Char == NEWLINE_CHAR)
+				{
+					TrimBuffer(Buffer);
+					strcpy_s(CurrentComment, 256, Buffer);
+					*Buffer = EMPTY_CHAR;
+
+					State = 0; // End comment
+
+					if (*CurrentSection == EMPTY_CHAR)
+						Result.AddComment(CurrentComment);
+					else
+					{
+						FIniSection& Section = Result.FindOrAddSection(FName(CurrentSection));
+						Section.AddComment(CurrentComment);
+					}
+				}
+				else
+					AppendBuffer(Buffer, Char);
 				break;
 
 			// Section name started
@@ -156,7 +180,9 @@ FIniData UIniLibrary::ParseIniString(FString String)
 						break;
 
 					default:
-						AppendBuffer(Buffer, Char);
+						if (Char != DOUBLE_QUOTE_CHAR && Char != APOSTROPHE_CHAR)
+							AppendBuffer(Buffer, Char); // Avoid adding double or single quotes
+
 						State = 6; // Begin value
 						break;
 				}
@@ -164,18 +190,28 @@ FIniData UIniLibrary::ParseIniString(FString String)
 
 			// Start of value
 			case 6:
-				if (Char == NEWLINE_CHAR)
+				switch (Char)
 				{
-					TrimBuffer(Buffer);
-					strcpy_s(CurrentValue, 256, Buffer);
-					*Buffer = EMPTY_CHAR;
-					State = 0;
+					case NEWLINE_CHAR:
+					{
+						TrimBuffer(Buffer);
+						strcpy_s(CurrentValue, 256, Buffer);
+						*Buffer = EMPTY_CHAR;
+						State = 0;
 
-					FIniSection& Section = Result.AddSection(CurrentSection);
-					Section.AddProperty(CurrentKey, CurrentValue);
+						FIniSection& Section = Result.FindOrAddSection(FName(CurrentSection));
+						Section.AddProperty(FName(CurrentKey), CurrentValue);
+					}
+					break;
+
+					case DOUBLE_QUOTE_CHAR:
+					case APOSTROPHE_CHAR:
+						break;
+
+					default:
+						AppendBuffer(Buffer, Char);
+						break;
 				}
-				else
-					AppendBuffer(Buffer, Char);
 				break;
 
 			// Invalid key format
@@ -185,12 +221,43 @@ FIniData UIniLibrary::ParseIniString(FString String)
 		}
 	}
 
+	// Value is finished, but no newline detected.
+	if (State == 6)
+	{
+		TrimBuffer(Buffer);
+		strcpy_s(CurrentValue, 256, Buffer);
+		*Buffer = EMPTY_CHAR;
+		State = 0;
+
+		FIniSection& Section = Result.FindOrAddSection(FName(CurrentSection));
+		Section.AddProperty(FName(CurrentKey), CurrentValue);
+	}
+
 	return Result;
+}
+
+FIniData UIniLibrary::ParseIniFromFile(FString FilePath)
+{
+	IPlatformFile& FileManager = FPlatformFileManager::Get().GetPlatformFile();
+	FString Contents;
+
+	if (FileManager.FileExists(*FilePath))
+	{
+		if (FFileHelper::LoadFileToString(Contents, *FilePath, FFileHelper::EHashOptions::None))
+			return ParseIniFromString(Contents);
+	}
+	else
+	{
+		UE_LOG(LogIniParser, Warning, TEXT("ERROR: Can not read the file because it was not found."));
+		UE_LOG(LogIniParser, Warning, TEXT("Expected file location: %s"), *FilePath);
+	}
+
+	return FIniData();
 }
 
 void UIniLibrary::AppendBuffer(char* Buffer, char Char)
 {
-	if (iscntrl(Char))
+	if (iscntrl(Char)) // Check if character is a control character
 		return;
 
 	char str[2] = { Char, EMPTY_CHAR };
@@ -209,29 +276,29 @@ void UIniLibrary::TrimBuffer(char* Buffer)
 }
 
 FIniData UIniLibrary::MakeIniDataStruct(
-	TMap<FString, FIniSection> Sections)
+	TMap<FName, FIniSection> Sections)
 {
 	return FIniData(Sections);
 }
 
 FString UIniLibrary::Conv_IniDataToString(const FIniData& Data) { return Data.ToString(); }
 
-void UIniLibrary::GetSection(FIniData& Data, FString SectionName, FIniSection& OutSection)
+void UIniLibrary::GetSection(FIniData& Data, FName SectionName, FIniSection& OutSection)
 {
 	OutSection = Data.GetSection(SectionName);
 }
 
-bool UIniLibrary::GetTrySection(FIniData& Data, FString SectionName, FIniSection& OutSection)
+bool UIniLibrary::GetTrySection(FIniData& Data, FName SectionName, FIniSection& OutSection)
 {
 	return Data.TryGetSection(SectionName, OutSection);
 }
 
-void UIniLibrary::GetProperty(FIniSection& Section, FString PropertyName, FIniProperty& OutProperty)
+void UIniLibrary::GetProperty(FIniSection& Section, FName PropertyName, FIniProperty& OutProperty)
 {
 	OutProperty = Section.GetProperty(PropertyName);
 }
 
-bool UIniLibrary::GetTryProperty(FIniSection& Section, FString PropertyName, FIniProperty& OutProperty)
+bool UIniLibrary::GetTryProperty(FIniSection& Section, FName PropertyName, FIniProperty& OutProperty)
 {
 	return Section.TryGetProperty(PropertyName, OutProperty);
 }

@@ -1,7 +1,7 @@
 #include "IniProperty.h"
 #include "Kismet/KismetStringLibrary.h"
 
-FORCEINLINE FString FIniProperty::ToString() const { return FString::Printf(TEXT("%s=%s"), *KeyName, *Value); }
+FString FIniProperty::ToString() const { return FString::Printf(TEXT("%s=%s"), *KeyName.ToString(), *Value); }
 
 void FIniProperty::operator=(const uint8_t& NewValue) { Value = UKismetStringLibrary::Conv_ByteToString(NewValue); }
 void FIniProperty::operator=(const int32& NewValue) { Value = UKismetStringLibrary::Conv_IntToString(NewValue); }

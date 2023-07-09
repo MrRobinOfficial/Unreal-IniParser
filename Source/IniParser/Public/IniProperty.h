@@ -11,37 +11,34 @@ struct FIniProperty
 	GENERATED_BODY()
 
 public:
-	const FString& GetKeyName() const { return KeyName; }
-
-	const FString& GetValue() const { return Value; }
+	FORCEINLINE FName GetKeyName() const { return KeyName; }
+	FORCEINLINE FString GetValue() const { return Value; }
 
 protected:
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="IniProperty")
-	FString KeyName;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "IniProperty")
+	FName KeyName;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "IniProperty")
 	FString Value;
 
 public:
 	FIniProperty()
-	{
-		KeyName = FString();
-		Value = FString();
-	}
+		: KeyName(NAME_None)
+		, Value()
+	{ }
 
-	FIniProperty(FString NewKeyName)
-	{
-		KeyName = NewKeyName;
-		Value = FString();
-	}
+	FIniProperty(FName NewKeyName)
+		: KeyName(NewKeyName)
+		, Value()
+	{ }
 
-	FIniProperty(FString NewKeyName, FString NewValue)
-	{
-		KeyName = NewKeyName;
-		Value = NewValue;
-	}
+	FIniProperty(FName NewKeyName, FString NewValue)
+		: KeyName(NewKeyName)
+		, Value(NewValue)
+	{ }
 
 public:
+	/*  */
 	FString ToString() const;
 
 public:

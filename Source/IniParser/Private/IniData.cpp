@@ -1,17 +1,12 @@
 #include "IniData.h"
 #include "Kismet/KismetStringLibrary.h"
 
-bool FIniData::HasSection(const FString& SectionName) const
-{
-	return Sections.Contains(SectionName);
-}
-
-FIniSection& FIniData::GetSection(const FString& SectionName)
+FIniSection& FIniData::GetSection(const FName& SectionName)
 {
 	return Sections[SectionName];
 }
 
-bool FIniData::TryGetSection(const FString& SectionName, FIniSection& OutSection)
+bool FIniData::TryGetSection(const FName& SectionName, FIniSection& OutSection)
 {
 	if (!HasSection(SectionName))
 		return false;
@@ -20,37 +15,56 @@ bool FIniData::TryGetSection(const FString& SectionName, FIniSection& OutSection
 	return true;
 }
 
-FIniSection& FIniData::AddSection(const FString& SectionName)
+FIniSection* FIniData::FindSection(const FName& SectionName)
+{
+	return Sections.Find(SectionName);
+}
+
+FIniSection& FIniData::AddSection(const FName& SectionName)
+{
+	return Sections.Add(SectionName, FIniSection(SectionName));
+}
+
+FIniSection& FIniData::FindOrAddSection(const FName& SectionName)
 {
 	return Sections.FindOrAdd(SectionName, FIniSection(SectionName));
 }
 
-FORCEINLINE FString FIniData::ToString() const
+void FIniData::AddComment(FString Comment)
 {
-	FString StringResult;
+	Comments.Add(Comment);
+}
 
-	StringResult += TEXT("\n=== .Ini Data ===\n");
+void FIniData::AddUniqueComment(FString Comment)
+{
+	Comments.AddUnique(Comment);
+}
 
-	StringResult += TEXT("\n=== Sections ===\n");
+FString FIniData::ToString() const
+{
+	TStringBuilder<256> SB;
+
+	SB.Append(TEXT("\r\n=== .Ini Data ===\r\n"));
+	SB.Append(TEXT("\r\n=== Sections ===\r\n"));
 
 	for (auto& Section : Sections)
 	{
-		StringResult += FString::Printf(TEXT("\n=== %s ===\n"), *Section.Key);
+		SB.Append(FString::Printf(TEXT("\r\n=== %s ===\r\n"), *Section.Key.ToString()));
 
 		TArray<FString> Array;
 
 		for (auto& Property : Section.Value.GetProperties())
 			Array.Add(Property.Value.ToString());
 
-		StringResult += FString::Printf(TEXT("%s\n"),
+		SB.Append(FString::Printf(TEXT("%s\r\n"),
 			*(UKismetStringLibrary::JoinStringArray(Array, TEXT("\n")))
-		);
+		));
 	}
 
-	return StringResult;
+	return SB.ToString();
 }
 
-FIniSection& FIniData::operator[](const FString& SectionName)
+FIniSection& FIniData::operator[](const FName& SectionName)
 {
 	return Sections[SectionName];
 }

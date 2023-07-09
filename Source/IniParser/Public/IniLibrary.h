@@ -9,42 +9,63 @@
 #include "IniSection.h"
 #include "IniLibrary.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogIniParser, Log, All);
+
 UCLASS()
 class INIPARSER_API UIniLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 	
 public:
+	/**
+	 * Parse .Ini From String
+	 *
+	 * @param String
+	 * @return Lorem Ipsum
+	 */
 	UFUNCTION(
 		BlueprintCallable,
 		Category = "IniParser|IniLibrary",
-		meta = (DisplayName = "Parse .Ini String")
+		meta = (DisplayName = "Parse .Ini From String")
 	)
-	static FIniData ParseIniString(FString String);
+	static FIniData ParseIniFromString(FString String);
+
+	/**
+	 * Parse .Ini From File
+	 *
+	 * @param FilePath
+	 * @return Lorem Ipsum
+	 */
+	UFUNCTION(
+		BlueprintCallable,
+		Category = "IniParser|IniLibrary",
+		meta = (DisplayName = "Parse .Ini From File")
+	)
+	static FIniData ParseIniFromFile(FString FilePath);
 
 	UFUNCTION(
 		BlueprintCallable,
 		Category = "IniParser|IniLibrary"
 	)
-	static void GetSection(UPARAM(ref) FIniData& Data, FString SectionName, FIniSection& OutSection);
+	static void GetSection(UPARAM(ref) FIniData& Data, FName SectionName, FIniSection& OutSection);
 
 	UFUNCTION(
 		BlueprintCallable,
 		Category = "IniParser|IniLibrary"
 	)
-	static bool GetTrySection(UPARAM(ref) FIniData& Data, FString SectionName, FIniSection& OutSection);
+	static bool GetTrySection(UPARAM(ref) FIniData& Data, FName SectionName, FIniSection& OutSection);
 
 	UFUNCTION(
 		BlueprintCallable,
 		Category = "IniParser|IniLibrary"
 	)
-	static void GetProperty(UPARAM(ref) FIniSection& Section, FString PropertyName, FIniProperty& OutProperty);
+	static void GetProperty(UPARAM(ref) FIniSection& Section, FName PropertyName, FIniProperty& OutProperty);
 
 	UFUNCTION(
 		BlueprintCallable,
 		Category = "IniParser|IniLibrary"
 	)
-	static bool GetTryProperty(UPARAM(ref) FIniSection& Section, FString PropertyName, FIniProperty& OutProperty);
+	static bool GetTryProperty(UPARAM(ref) FIniSection& Section, FName PropertyName, FIniProperty& OutProperty);
 
 	UFUNCTION(
 		BlueprintCallable,
@@ -141,7 +162,7 @@ public:
 		Category = "IniParser|IniLibrary",
 		meta = (BlueprintThreadSafe)
 	)
-	static FIniData MakeIniDataStruct(TMap<FString, FIniSection> Sections);
+	static FIniData MakeIniDataStruct(TMap<FName, FIniSection> Sections);
 
 	UFUNCTION(
 		BlueprintCallable,
