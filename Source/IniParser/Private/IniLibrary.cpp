@@ -3,6 +3,10 @@
 #include "IniLibrary.h"
 #include "Kismet/KismetStringLibrary.h"
 
+#include "HAL/PlatformFilemanager.h"
+#include "Misc/FileHelper.h"
+#include "GenericPlatform/GenericPlatformFile.h"
+
 DEFINE_LOG_CATEGORY(LogIniParser);
 
 static const char& COMMENT_CHAR = ';';

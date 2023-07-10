@@ -1,13 +1,13 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "2.0",
+	"VersionName": "0.1.0",
 	"FriendlyName": "IniParser",
 	"Description": "Read/Write an .Ini file the unreal way!",
 	"Category": "Other",
 	"CreatedBy": "MrRobinOfficial",
 	"CreatedByURL": "https://github.com/MrRobinOfficial",
-	"DocsURL": "",
+	"DocsURL": "https://github.com/MrRobinOfficial/Unreal-IniParser/",
 	"MarketplaceURL": "",
 	"SupportURL": "",
 	"CanContainContent": true,
@@ -18,7 +18,13 @@
 		{
 			"Name": "IniParser",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Win64"
+			]
 		}
+	],
+	"SupportedTargetPlatforms": [
+		"Win64"
 	]
 }
