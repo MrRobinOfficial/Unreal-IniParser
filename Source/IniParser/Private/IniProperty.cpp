@@ -16,9 +16,9 @@ void FIniProperty::operator=(const FVector2D& NewValue) { Value = UKismetStringL
 void FIniProperty::operator=(const FIntVector& NewValue) { Value = UKismetStringLibrary::Conv_IntVectorToString(NewValue); }
 void FIniProperty::operator=(const FRotator& NewValue) { Value = UKismetStringLibrary::Conv_RotatorToString(NewValue); }
 void FIniProperty::operator=(const FMatrix& NewValue) { Value = UKismetStringLibrary::Conv_MatrixToString(NewValue); }
-void FIniProperty::operator=(const FName& NewValue) { Value = UKismetStringLibrary::Conv_NameToString(NewValue); }
 void FIniProperty::operator=(const FString& NewValue) { Value = NewValue; }
 void FIniProperty::operator=(const FText& NewValue) { Value = NewValue.ToString(); }
+void FIniProperty::operator=(const FName& NewValue) { Value = UKismetStringLibrary::Conv_NameToString(NewValue); }
 void FIniProperty::operator=(UObject* NewValue) { Value = UKismetStringLibrary::Conv_ObjectToString(NewValue); }
 void FIniProperty::operator=(const FTransform& NewValue) { Value = UKismetStringLibrary::Conv_TransformToString(NewValue); }
 void FIniProperty::operator=(const FLinearColor& NewValue) { Value = UKismetStringLibrary::Conv_ColorToString(NewValue); }

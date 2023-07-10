@@ -16,56 +16,65 @@ static const char& SPACE_CHAR = ' ';
 static const char& EMPTY_CHAR = '\0';
 static const char& EQUALS_CHAR = '=';
 
+void UIniLibrary::AppendBuffer(char* Buffer, char Char)
+{
+	if (iscntrl(Char)) // Check if character is a control character
+		return;
+
+	char str[2] = { Char, EMPTY_CHAR };
+	strcat_s(Buffer, 256, str);
+}
+
+void UIniLibrary::TrimBuffer(char* Buffer)
+{
+	char* Char = &Buffer[strlen(Buffer) - 1];
+
+	if (*Char == SPACE_CHAR || *Char == TAB_CHAR)
+	{
+		*Char = EMPTY_CHAR;
+		TrimBuffer(Buffer);
+	}
+}
+
 FIniData UIniLibrary::ParseIniFromString(FString String)
 {
-	FIniData Result = FIniData();
+	FIniData GlobalData;
 
-	char Buffer[256];
-	*Buffer = EMPTY_CHAR;
-
-	char CurrentSection[256];
-	*CurrentSection = EMPTY_CHAR;
-
+	char Buffer[256] = { EMPTY_CHAR };
+	char CurrentSection[256] = { EMPTY_CHAR };
 	char CurrentKey[256];
 	char CurrentValue[256];
 	char CurrentComment[256];
 
-	/*
-	* 0 - Ready for .Ini data
-	* 1 - Comment started
-	* 2 - Section name started
-	* 3 - Key started
-	* 4 - Key finished
-	* 5 - Ready for value
-	* 6 - Value started
-	* 7 - Invalid key format
-	*/
-	int32_t State = 0;
-
-	for (auto It = String.CreateConstIterator(); It; ++It)
+	enum class ParserState
 	{
-		if (!String.IsValidIndex(It.GetIndex()))
-			continue;
+		ReadyForIniData,
+		CommentStarted,
+		SectionNameStarted,
+		KeyStarted,
+		KeyFinished,
+		ReadyForValue,
+		ValueStarted,
+		InvalidKeyFormat
+	};
 
-		char Char = String[It.GetIndex()];
+	ParserState State = ParserState::ReadyForIniData;
 
+	for (TCHAR Char : String)
+	{
 		switch (State)
 		{
-			// Waiting for .ini data
-			case 0:
+			case ParserState::ReadyForIniData:
 				switch (Char)
 				{
 					case COMMENT_CHAR:
-						State = 1; // Start comment
-
-						continue; // Skip one character!
-						break;
+						State = ParserState::CommentStarted;
+						continue;
 
 					case SECTION_START_CHAR:
-						State = 2; // Start section name
+						State = ParserState::SectionNameStarted;
 						break;
 
-					// Valid spacings
 					case SPACE_CHAR:
 					case NEWLINE_CHAR:
 					case TAB_CHAR:
@@ -73,26 +82,25 @@ FIniData UIniLibrary::ParseIniFromString(FString String)
 
 					default:
 						AppendBuffer(Buffer, Char);
-						State = 3; // Start key
+						State = ParserState::KeyStarted;
 						break;
 				}
 				break;
 
-			// Reading comment
-			case 1:
+			case ParserState::CommentStarted:
 				if (Char == NEWLINE_CHAR)
 				{
 					TrimBuffer(Buffer);
-					strcpy_s(CurrentComment, 256, Buffer);
-					*Buffer = EMPTY_CHAR;
+					strcpy_s(CurrentComment, Buffer);
+					Buffer[0] = EMPTY_CHAR;
 
-					State = 0; // End comment
+					State = ParserState::ReadyForIniData;
 
-					if (*CurrentSection == EMPTY_CHAR)
-						Result.AddComment(CurrentComment);
+					if (CurrentSection[0] == EMPTY_CHAR)
+						GlobalData.AddComment(CurrentComment);
 					else
 					{
-						FIniSection& Section = Result.FindOrAddSection(FName(CurrentSection));
+						FIniSection& Section = GlobalData.FindOrAddSection(FName(CurrentSection));
 						Section.AddComment(CurrentComment);
 					}
 				}
@@ -100,21 +108,18 @@ FIniData UIniLibrary::ParseIniFromString(FString String)
 					AppendBuffer(Buffer, Char);
 				break;
 
-			// Section name started
-			case 2:
+			case ParserState::SectionNameStarted:
 				switch (Char)
 				{
-					// End section name
 					case SECTION_END_CHAR:
-						strcpy_s(CurrentSection, 256, Buffer);
-						*Buffer = EMPTY_CHAR;
-						State = 0;
+						strcpy_s(CurrentSection, Buffer);
+						Buffer[0] = EMPTY_CHAR;
+						State = ParserState::ReadyForIniData;
 						break;
 
-					// Invalid section name (discard)
 					case NEWLINE_CHAR:
-						*Buffer = EMPTY_CHAR;
-						State = 0;
+						Buffer[0] = EMPTY_CHAR;
+						State = ParserState::ReadyForIniData;
 						break;
 
 					default:
@@ -123,38 +128,35 @@ FIniData UIniLibrary::ParseIniFromString(FString String)
 				}
 				break;
 
-			// Key started
-			case 3:
+			case ParserState::KeyStarted:
 				switch (Char)
 				{
 					case SPACE_CHAR:
 					case TAB_CHAR:
-						strcpy_s(CurrentKey, 256, Buffer);
-						*Buffer = EMPTY_CHAR;
-						State = 4; // End key
+						strcpy_s(CurrentKey, Buffer);
+						Buffer[0] = EMPTY_CHAR;
+						State = ParserState::KeyFinished;
 						break;
 
-					// Invalid key (discard)
 					case NEWLINE_CHAR:
-						State = 0;
+						State = ParserState::ReadyForIniData;
 						break;
 
 					default:
 						AppendBuffer(Buffer, Char);
 						break;
-				}		
+				}
 				break;
 
-			// End of key
-			case 4:
+			case ParserState::KeyFinished:
 				switch (Char)
 				{
 					case EQUALS_CHAR:
-						State = 5; // Ready for value
+						State = ParserState::ReadyForValue;
 						break;
 
 					case NEWLINE_CHAR:
-						State = 0; // Invalid key value
+						State = ParserState::ReadyForIniData;
 						break;
 
 					case SPACE_CHAR:
@@ -162,17 +164,16 @@ FIniData UIniLibrary::ParseIniFromString(FString String)
 						break;
 
 					default:
-						State = 7; // Invalid key format
+						State = ParserState::InvalidKeyFormat;
 						break;
 				}
 				break;
 
-			// Ready for value
-			case 5:
+			case ParserState::ReadyForValue:
 				switch (Char)
 				{
 					case NEWLINE_CHAR:
-						State = 0; // Invalid key value
+						State = ParserState::ReadyForIniData;
 						break;
 
 					case SPACE_CHAR:
@@ -181,26 +182,30 @@ FIniData UIniLibrary::ParseIniFromString(FString String)
 
 					default:
 						if (Char != DOUBLE_QUOTE_CHAR && Char != APOSTROPHE_CHAR)
-							AppendBuffer(Buffer, Char); // Avoid adding double or single quotes
+							AppendBuffer(Buffer, Char);
 
-						State = 6; // Begin value
+						State = ParserState::ValueStarted;
 						break;
 				}
 				break;
 
-			// Start of value
-			case 6:
+			case ParserState::ValueStarted:
 				switch (Char)
 				{
 					case NEWLINE_CHAR:
 					{
 						TrimBuffer(Buffer);
-						strcpy_s(CurrentValue, 256, Buffer);
-						*Buffer = EMPTY_CHAR;
-						State = 0;
+						strcpy_s(CurrentValue, Buffer);
+						Buffer[0] = EMPTY_CHAR;
+						State = ParserState::ReadyForIniData;
 
-						FIniSection& Section = Result.FindOrAddSection(FName(CurrentSection));
-						Section.AddProperty(FName(CurrentKey), CurrentValue);
+						if (CurrentSection[0] == EMPTY_CHAR)
+							GlobalData.FindOrAddProperty(FName(CurrentKey), CurrentValue);
+						else
+						{
+							FIniSection& Section = GlobalData.FindOrAddSection(FName(CurrentSection));
+							Section.FindOrAddProperty(FName(CurrentKey), CurrentValue);
+						}
 					}
 					break;
 
@@ -214,26 +219,25 @@ FIniData UIniLibrary::ParseIniFromString(FString String)
 				}
 				break;
 
-			// Invalid key format
-			case 7:
-				if (Char == NEWLINE_CHAR) State = 0;
+			case ParserState::InvalidKeyFormat:
+				if (Char == NEWLINE_CHAR)
+					State = ParserState::ReadyForIniData;
 				break;
-		}
+			}
 	}
 
-	// Value is finished, but no newline detected.
-	if (State == 6)
+	if (State == ParserState::ValueStarted)
 	{
 		TrimBuffer(Buffer);
-		strcpy_s(CurrentValue, 256, Buffer);
-		*Buffer = EMPTY_CHAR;
-		State = 0;
+		strcpy_s(CurrentValue, Buffer);
+		Buffer[0] = EMPTY_CHAR;
+		State = ParserState::ReadyForIniData;
 
-		FIniSection& Section = Result.FindOrAddSection(FName(CurrentSection));
+		FIniSection& Section = GlobalData.FindOrAddSection(FName(CurrentSection));
 		Section.AddProperty(FName(CurrentKey), CurrentValue);
 	}
 
-	return Result;
+	return GlobalData;
 }
 
 FIniData UIniLibrary::ParseIniFromFile(FString FilePath)
@@ -255,26 +259,6 @@ FIniData UIniLibrary::ParseIniFromFile(FString FilePath)
 	return FIniData();
 }
 
-void UIniLibrary::AppendBuffer(char* Buffer, char Char)
-{
-	if (iscntrl(Char)) // Check if character is a control character
-		return;
-
-	char str[2] = { Char, EMPTY_CHAR };
-	strcat_s(Buffer, 256, str);
-}
-
-void UIniLibrary::TrimBuffer(char* Buffer)
-{
-	char* Char = &Buffer[strlen(Buffer) - 1];
-
-	if (*Char == SPACE_CHAR || *Char == TAB_CHAR)
-	{
-		*Char = EMPTY_CHAR;
-		TrimBuffer(Buffer);
-	}
-}
-
 FIniData UIniLibrary::MakeIniDataStruct(
 	TMap<FName, FIniSection> Sections)
 {
@@ -290,6 +274,9 @@ void UIniLibrary::GetSection(FIniData& Data, FName SectionName, FIniSection& Out
 
 bool UIniLibrary::GetTrySection(FIniData& Data, FName SectionName, FIniSection& OutSection)
 {
+	if (Data.HasEmptySections())
+		return false;
+
 	return Data.TryGetSection(SectionName, OutSection);
 }
 
@@ -300,6 +287,9 @@ void UIniLibrary::GetProperty(FIniSection& Section, FName PropertyName, FIniProp
 
 bool UIniLibrary::GetTryProperty(FIniSection& Section, FName PropertyName, FIniProperty& OutProperty)
 {
+	if (Section.HasEmptyProperties())
+		return false;
+
 	return Section.TryGetProperty(PropertyName, OutProperty);
 }
 

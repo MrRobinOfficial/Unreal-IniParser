@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "IniProperty.generated.h"
 
+/* .ini property - Every property has a name and a value, delimited by an equals sign (=). The name appears to the left of the equals sign. In the Windows implementation the equal sign and the semicolon are reserved characters and cannot appear in the key. The value can contain any character. */
 USTRUCT(BlueprintType)
 struct FIniProperty
 {
@@ -38,7 +39,11 @@ public:
 	{ }
 
 public:
-	/*  */
+	/**
+	 * Convert .ini property into a string
+	 *
+	 * @return String as formated: Key=Value
+	 */
 	FString ToString() const;
 
 public:
@@ -55,9 +60,9 @@ public:
 	void operator=(const FIntVector& NewValue);
 	void operator=(const FRotator& NewValue);
 	void operator=(const FMatrix& NewValue);
-	void operator=(const FName& NewValue);
 	void operator=(const FString& NewValue);
 	void operator=(const FText& NewValue);
+	void operator=(const FName& NewValue);
 	void operator=(UObject* NewValue);
 	void operator=(const FTransform& NewValue);
 	void operator=(const FLinearColor& NewValue);

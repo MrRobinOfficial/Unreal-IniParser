@@ -7,11 +7,6 @@ FIniProperty& FIniSection::operator[](const FName& PropertyName)
 	return Properties[PropertyName];
 }
 
-bool FIniSection::HasProperty(const FName& PropertyName) const
-{
-	return Properties.Contains(PropertyName);
-}
-
 void FIniSection::AddComment(FString Comment)
 {
 	Comments.Add(Comment);
@@ -36,7 +31,17 @@ bool FIniSection::TryGetProperty(const FName& PropertyName, FIniProperty& OutPro
 	return true;
 }
 
-FIniProperty& FIniSection::AddProperty(const FName& KeyName, const FString& Value)
+FIniProperty* FIniSection::FindProperty(const FName& KeyName)
+{
+	return Properties.Find(KeyName);
+}
+
+FIniProperty& FIniSection::FindOrAddProperty(const FName& KeyName, const FString& Value)
 {
 	return Properties.FindOrAdd(KeyName, FIniProperty(KeyName, Value));
+}
+
+FIniProperty& FIniSection::AddProperty(const FName& KeyName, const FString& Value)
+{
+	return Properties.Add(KeyName, FIniProperty(KeyName, Value));
 }

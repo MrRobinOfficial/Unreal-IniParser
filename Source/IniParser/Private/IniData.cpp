@@ -40,6 +40,21 @@ void FIniData::AddUniqueComment(FString Comment)
 	Comments.AddUnique(Comment);
 }
 
+FIniProperty* FIniData::FindProperty(const FName& KeyName)
+{
+	return Properties.Find(KeyName);
+}
+
+FIniProperty& FIniData::FindOrAddProperty(const FName& KeyName, const FString& Value)
+{
+	return Properties.FindOrAdd(KeyName, FIniProperty(KeyName, Value));
+}
+
+FIniProperty& FIniData::AddProperty(const FName& KeyName, const FString& Value)
+{
+	return Properties.Add(KeyName, FIniProperty(KeyName, Value));
+}
+
 FString FIniData::ToString() const
 {
 	TStringBuilder<256> SB;
