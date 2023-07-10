@@ -5,11 +5,12 @@
 
 <h1 align="center">IniParser [Unreal Engine]</h1>
 
-*Read/Write an .Ini file the unreal way!*
-
 <div align="center">
+
+*Read/Write an .Ini file the unreal way!*
   
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/mrrobinofficial/iniparser-unreal/blob/HEAD/LICENSE.txt)
+![plugin-status](https://img.shields.io/badge/plugin_status-completed-green)
 ![maintenance-status](https://img.shields.io/badge/maintenance-passively--maintained-yellowgreen.svg)
 
 </div>
@@ -21,11 +22,11 @@ This plug-in was last built against Unreal Engine 5.1. It should work on all pla
 
 ## ⚒️ Installation
 
-You can either install via Epic Games Marketplace.
+You can either install via <a href="#">Epic Games Marketplace</a>.
 
-[*Here*]() is the link.
+Or you can install from the <a href="#">release section</a>.
 
-Or you can install via [*git*](https://git-scm.com/). Here is the command for installing it.
+Alternatively, you can install this plugin via terminal with [*git*](https://git-scm.com/). **Here is the command for installing it**.
 
 ```console
 git clone git@github.com:MrRobinOfficial/Unreal-IniParser.git IniParser
@@ -42,11 +43,18 @@ git clone git@github.com:MrRobinOfficial/Unreal-IniParser.git IniParser
 
 ## 📝 Quick guide
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam vel efficitur enim. Donec lobortis nibh ac commodo viverra. Curabitur scelerisque mi nisi, ac fringilla ante porta quis. Morbi aliquam posuere mauris. Fusce condimentum est accumsan lorem sagittis convallis. Curabitur egestas, arcu vitae varius tempor, turpis libero aliquam nisi, et gravida leo urna non sem. In vulputate tincidunt lectus, eget blandit tortor. Morbi id luctus urna. Vestibulum in magna at metus ultricies vulputate. Ut ultricies hendrerit tortor sit amet fringilla. Nullam nec suscipit neque. Pellentesque in vulputate lectus.
+This plugin is parsing system for file type `.ini`. You can  <a href="https://en.wikipedia.org/wiki/INI">read more</a> about `.ini` file system.
 
-## 📌 Overview
+From the `IniLibrary` (Blueprint Function Library class), you have a couple functions to use:
 
-Nunc consequat diam id turpis imperdiet, id tempus turpis dictum. Vestibulum non rhoncus orci, nec vestibulum elit. Vestibulum eu blandit erat. Duis porta ultrices tellus sit amet efficitur. Morbi dignissim justo pellentesque turpis elementum dapibus. Vivamus rutrum ligula et elementum viverra. Maecenas blandit varius purus a faucibus. Aenean leo tellus, lacinia et nisl sed, iaculis sodales ipsum. Aenean sollicitudin, libero ac viverra pellentesque, odio odio rhoncus turpis, eu mattis ligula dolor ut risus. Vivamus tincidunt nisl vitae nunc aliquet pulvinar ac quis nisi. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Sed pharetra lacus aliquet porttitor tempus.
+* Mainly, `ParseIniFromString(FString String)` and `ParseIniFromFile(FString FilePath)` for C++ users.
+* And for Blueprint users, it's: "*Parse .Ini From String*" And "*Parse .Ini From File*".
+
+This `.ini` parsing system support:
+
+* Sections and properties, names are case-insensitive.
+* Data container (`FIniData`) support for global comments and properties. Meaning, comments/properties is defined under a section.
+* Property support values with double quote and apostrophe.
 
 ## 🆘 Support
 If you have any questions or issue, just write either to my [YouTube channel](https://www.youtube.com/@mrrobinofficial), [Email](mailto:mrrobin123mail@gmail.com) or [Twitter DM](https://twitter.com/MrRobinOfficial).
