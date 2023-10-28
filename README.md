@@ -22,9 +22,7 @@ This plug-in was last built against Unreal Engine 5.1. It should work on all pla
 
 ## ⚒️ Installation
 
-You can either install via <a href="#">Epic Games Marketplace</a>.
-
-Or you can install from the <a href="https://github.com/MrRobinOfficial/Unreal-IniParser/releases/latest">release section</a>.
+You can install from the <a href="https://github.com/MrRobinOfficial/Unreal-IniParser/releases/latest">release section</a>.
 
 Alternatively, you can install this plugin via terminal with [*git*](https://git-scm.com/). **Here is the command for installing it**.
 
