@@ -9,7 +9,7 @@
 
 *Read/Write an .Ini file the unreal way!*
   
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/mrrobinofficial/iniparser-unreal/blob/HEAD/LICENSE.txt)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/mrrobinofficial/unreal-iniparser/blob/HEAD/LICENSE.txt)
 ![plugin-status](https://img.shields.io/badge/plugin_status-ready_to_use-green)
 ![maintenance-status](https://img.shields.io/badge/maintenance-passively--maintained-yellowgreen.svg)
 
