@@ -1,11 +1,6 @@
+// Copyright 2023 MrRobin. All Rights Reserved.
+
 #include "IniSection.h"
-
-FString FIniSection::ToString() const { return SectionName.ToString(); }
-
-FIniProperty& FIniSection::operator[](const FName& PropertyName)
-{
-	return Properties[PropertyName];
-}
 
 void FIniSection::AddComment(FString Comment)
 {
@@ -31,17 +26,27 @@ bool FIniSection::TryGetProperty(const FName& PropertyName, FIniProperty& OutPro
 	return true;
 }
 
-FIniProperty* FIniSection::FindProperty(const FName& KeyName)
+FIniProperty* FIniSection::FindProperty(const FName& Key)
 {
-	return Properties.Find(KeyName);
+	return Properties.Find(Key);
 }
 
-FIniProperty& FIniSection::FindOrAddProperty(const FName& KeyName, const FString& Value)
+FIniProperty FIniSection::FindRefProperty(const FName& Key)
 {
-	return Properties.FindOrAdd(KeyName, FIniProperty(KeyName, Value));
+	return Properties.FindRef(Key);
 }
 
-FIniProperty& FIniSection::AddProperty(const FName& KeyName, const FString& Value)
+FIniProperty& FIniSection::FindOrAddProperty(const FName& Key, const FString& Value)
 {
-	return Properties.Add(KeyName, FIniProperty(KeyName, Value));
+	return Properties.FindOrAdd(Key, FIniProperty(Value));
+}
+
+FIniProperty& FIniSection::AddProperty(const FName& Key, const FString& Value)
+{
+	return Properties.Add(Key, FIniProperty(Value));
+}
+
+FIniProperty& FIniSection::operator[](const FName& PropertyName)
+{
+	return Properties[PropertyName];
 }

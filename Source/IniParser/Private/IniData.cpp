@@ -1,9 +1,26 @@
+// Copyright 2023 MrRobin. All Rights Reserved.
+
 #include "IniData.h"
 #include "Kismet/KismetStringLibrary.h"
 
-FIniSection& FIniData::GetSection(const FName& SectionName)
+FIniSection* FIniData::FindSection(const FName& Key)
 {
-	return Sections[SectionName];
+	return Sections.Find(Key);
+}
+
+FIniSection FIniData::FindRefSection(const FName& Key)
+{
+	return Sections.FindRef(Key);
+}
+
+FIniSection& FIniData::FindOrAddSection(const FName& Key)
+{
+	return Sections.FindOrAdd(Key, FIniSection());
+}
+
+FIniSection& FIniData::AddSection(const FName& Key)
+{
+	return Sections.Add(Key, FIniSection());
 }
 
 bool FIniData::TryGetSection(const FName& SectionName, FIniSection& OutSection)
@@ -15,19 +32,9 @@ bool FIniData::TryGetSection(const FName& SectionName, FIniSection& OutSection)
 	return true;
 }
 
-FIniSection* FIniData::FindSection(const FName& SectionName)
+FIniSection& FIniData::GetSection(const FName& SectionName)
 {
-	return Sections.Find(SectionName);
-}
-
-FIniSection& FIniData::AddSection(const FName& SectionName)
-{
-	return Sections.Add(SectionName, FIniSection(SectionName));
-}
-
-FIniSection& FIniData::FindOrAddSection(const FName& SectionName)
-{
-	return Sections.FindOrAdd(SectionName, FIniSection(SectionName));
+	return Sections[SectionName];
 }
 
 void FIniData::AddComment(FString Comment)
@@ -40,43 +47,24 @@ void FIniData::AddUniqueComment(FString Comment)
 	Comments.AddUnique(Comment);
 }
 
-FIniProperty* FIniData::FindProperty(const FName& KeyName)
+FIniProperty* FIniData::FindProperty(const FName& Key)
 {
-	return Properties.Find(KeyName);
+	return Properties.Find(Key);
 }
 
-FIniProperty& FIniData::FindOrAddProperty(const FName& KeyName, const FString& Value)
+FIniProperty FIniData::FindRefProperty(const FName& Key)
 {
-	return Properties.FindOrAdd(KeyName, FIniProperty(KeyName, Value));
+	return Properties.FindRef(Key);
 }
 
-FIniProperty& FIniData::AddProperty(const FName& KeyName, const FString& Value)
+FIniProperty& FIniData::FindOrAddProperty(const FName& Key, const FString& Value)
 {
-	return Properties.Add(KeyName, FIniProperty(KeyName, Value));
+	return Properties.FindOrAdd(Key, FIniProperty(Value));
 }
 
-FString FIniData::ToString() const
+FIniProperty& FIniData::AddProperty(const FName& Key, const FString& Value)
 {
-	TStringBuilder<256> SB;
-
-	SB.Append(TEXT("\r\n=== .Ini Data ===\r\n"));
-	SB.Append(TEXT("\r\n=== Sections ===\r\n"));
-
-	for (auto& Section : Sections)
-	{
-		SB.Append(FString::Printf(TEXT("\r\n=== %s ===\r\n"), *Section.Key.ToString()));
-
-		TArray<FString> Array;
-
-		for (auto& Property : Section.Value.GetProperties())
-			Array.Add(Property.Value.ToString());
-
-		SB.Append(FString::Printf(TEXT("%s\r\n"),
-			*(UKismetStringLibrary::JoinStringArray(Array, TEXT("\n")))
-		));
-	}
-
-	return SB.ToString();
+	return Properties.Add(Key, FIniProperty(Value));
 }
 
 FIniSection& FIniData::operator[](const FName& SectionName)
