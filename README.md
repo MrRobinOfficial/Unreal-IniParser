@@ -35,6 +35,10 @@ git clone git@github.com:MrRobinOfficial/Unreal-IniParser.git IniParser
 <details open> 
     <summary><h2>🖼️ Screenshots</h2></summary>
     <img src="Resources/Screenshot_01.png" alt="Overview of Blueprint nodes from .Ini Library">
+    <img src="Resources/Screenshot_02.png" alt="Creating .ini data via Blueprint Editor">
+    <img src="Resources/Screenshot_03.png" alt="Write .ini data into a file">
+    <img src="Resources/Screenshot_04.png" alt="Output text from .ini data that was written">
+    <img src="Resources/Screenshot_05.png" alt="Parse .ini data structure from a file path">
 </details>
 
 #
@@ -45,8 +49,9 @@ This plugin is parsing system for file type `.ini`. You can  <a href="https://en
 
 From the `IniLibrary` (Blueprint Function Library class), you have a couple functions to use:
 
-* Mainly, `ParseIniFromString(FString String)` and `ParseIniFromFile(FString FilePath)` for C++ users.
-* And for Blueprint users, it's: "*Parse .Ini From String*" And "*Parse .Ini From File*".
+* Mainly: `ParseIniFromString(FString String)`, `ParseIniFromFile(FString FilePath)` and `ParseIniToString(const FIniData& Data)` for C++ users.
+* And for Blueprint users, it's: "*Parse .Ini From String*", "*Parse .Ini From File*" and "*Parse .Ini To String*".
+* Use `ReadIniFromFile` and `WriteIniToFile` for reading and writing to a specific file.
 
 This `.ini` parsing system support:
 

@@ -12,23 +12,52 @@ struct FIniData
 	GENERATED_BODY()
 
 private:
-	/// @brief Global comments
 	UPROPERTY(EditAnywhere, Category = "Details", meta = (AllowPrivateAccess = true))
-	TArray<FString> Comments;
+	TMap<FName, FIniSection> Sections;
 
 	/// @brief Global properties
 	UPROPERTY(EditAnywhere, Category = "Details", meta = (AllowPrivateAccess = true))
 	TMap<FName, FIniProperty> Properties;
 
+	/// @brief Global comments
 	UPROPERTY(EditAnywhere, Category = "Details", meta = (AllowPrivateAccess = true))
-	TMap<FName, FIniSection> Sections;
+	TArray<FString> Comments;
 
 public:
 	FIniData()
+		: Sections()
+		, Properties()
+		, Comments()
 	{ }
 
 	FIniData(TMap<FName, FIniSection> NewSections)
 		: Sections(NewSections)
+		, Properties()
+		, Comments()
+	{ }
+
+	FIniData(TMap<FName, FIniSection> NewSections, TMap<FName, FIniProperty> NewProperties)
+		: Sections(NewSections)
+		, Properties(NewProperties)
+		, Comments()
+	{ }
+
+	FIniData(TMap<FName, FIniSection> NewSections, TMap<FName, FIniProperty> NewProperties, TArray<FString> NewComments)
+		: Sections(NewSections)
+		, Properties(NewProperties)
+		, Comments(NewComments)
+	{ }
+
+	FIniData(TMap<FName, FIniSection> NewSections, TArray<FString> NewComments)
+		: Sections(NewSections)
+		, Properties()
+		, Comments(NewComments)
+	{ }
+
+	FIniData(TArray<FString> NewComments)
+		: Sections()
+		, Properties()
+		, Comments(NewComments)
 	{ }
 
 public:
@@ -77,15 +106,6 @@ public:
 	 * @return A reference of .ini section. The reference is only valid until the next change to any key in the map.
 	 */
 	FIniSection& AddSection(const FName& Key);
-
-	/**
-	 * Tries to get a .ini section based on the name.
-	 *
-	 * @param IN SectionName The name to search for.
-	 * @param OUT OutSection A reference to the .ini section associated with the specified name.
-	 * @return A boolean, whether it could find the section.
-	 */
-	bool TryGetSection(const FName& SectionName, FIniSection& OutSection);
 
 	/**
 	 * Get a .ini section based on the name.
@@ -142,6 +162,14 @@ public:
 	 * @return A reference to the newly created .ini property
 	 */
 	FIniProperty& AddProperty(const FName& Key, const FString& Value);
+
+	/**
+	 * Get a .ini property based on the name.
+	 *
+	 * @param IN PropertyName The name to search for.
+	 * @return A reference to the .ini property associated with the specified name.
+	 */
+	FIniProperty& GetProperty(const FName& PropertyName);
 
 public:
 	FIniSection& operator[](const FName& SectionName);

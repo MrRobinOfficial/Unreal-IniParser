@@ -23,15 +23,6 @@ FIniSection& FIniData::AddSection(const FName& Key)
 	return Sections.Add(Key, FIniSection());
 }
 
-bool FIniData::TryGetSection(const FName& SectionName, FIniSection& OutSection)
-{
-	if (!HasSection(SectionName))
-		return false;
-
-	OutSection = GetSection(SectionName);
-	return true;
-}
-
 FIniSection& FIniData::GetSection(const FName& SectionName)
 {
 	return Sections[SectionName];
@@ -65,6 +56,11 @@ FIniProperty& FIniData::FindOrAddProperty(const FName& Key, const FString& Value
 FIniProperty& FIniData::AddProperty(const FName& Key, const FString& Value)
 {
 	return Properties.Add(Key, FIniProperty(Value));
+}
+
+FIniProperty& FIniData::GetProperty(const FName& PropertyName)
+{
+	return Properties[PropertyName];
 }
 
 FIniSection& FIniData::operator[](const FName& SectionName)

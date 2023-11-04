@@ -17,15 +17,6 @@ FIniProperty& FIniSection::GetProperty(const FName& PropertyName)
 	return Properties[PropertyName];
 }
 
-bool FIniSection::TryGetProperty(const FName& PropertyName, FIniProperty& OutProperty)
-{
-	if (!HasProperty(PropertyName))
-		return false;
-
-	OutProperty = GetProperty(PropertyName);
-	return true;
-}
-
 FIniProperty* FIniSection::FindProperty(const FName& Key)
 {
 	return Properties.Find(Key);

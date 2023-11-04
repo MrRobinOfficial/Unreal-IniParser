@@ -66,15 +66,6 @@ public:
 	FIniProperty& AddProperty(const FName& Key, const FString& Value);
 
 	/**
-	 * Tries to get a .ini property based on the name.
-	 *
-	 * @param IN PropertyName The name to search for.
-	 * @param OUT OutProperty A reference to the .ini property associated with the specified name.
-	 * @return A boolean, whether it could find the property.
-	 */
-	bool TryGetProperty(const FName& PropertyName, FIniProperty& OutProperty);
-
-	/**
 	 * Get a .ini property based on the name.
 	 *
 	 * @param IN PropertyName The name to search for.

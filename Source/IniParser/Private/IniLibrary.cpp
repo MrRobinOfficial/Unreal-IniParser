@@ -370,15 +370,31 @@ FString UIniLibrary::Conv_IniDataToString(const FIniData& Data)
 	return ParseIniToString(Data);
 }
 
-void UIniLibrary::GetSections(FIniData& Data, TArray<FIniSection>& OutArray)
+int32 UIniLibrary::GetNumOfSections(FIniData& Data)
 {
-	Data.GetSections().GenerateValueArray(OutArray);
+	return Data.GetNumOfSections();
 }
 
-void UIniLibrary::GetProperties(FIniData& Data, FName SectionName, TArray<FIniProperty>& OutArray)
+int32 UIniLibrary::GetNumOfGlobalProperties(FIniData& Data)
+{
+	return Data.GetNumOfProperties();
+}
+
+int32 UIniLibrary::GetNumOfGlobalComments(FIniData& Data)
+{
+	return Data.GetNumOfComments();
+}
+
+int32 UIniLibrary::GetNumOfComments(FIniData& Data, FName SectionName)
 {
 	auto& Sect = Data.GetSection(SectionName);
-	Sect.GetProperties().GenerateValueArray(OutArray);
+	return Sect.GetNumOfProperties();
+}
+
+int32 UIniLibrary::GetNumOfProperties(FIniData& Data, FName SectionName)
+{
+	auto& Sect = Data.GetSection(SectionName);
+	return Sect.GetNumOfProperties();
 }
 
 void UIniLibrary::GetComments(FIniData& Data, FName SectionName, TArray<FString>& OutArray)
@@ -387,253 +403,456 @@ void UIniLibrary::GetComments(FIniData& Data, FName SectionName, TArray<FString>
 	OutArray = Sect.GetComments();
 }
 
-void UIniLibrary::GetGlobalProperties(FIniData& Data, TArray<FIniProperty>& OutArray)
-{
-	Data.GetProperties().GenerateValueArray(OutArray);
-}
-
 void UIniLibrary::GetGlobalComments(FIniData& Data, TArray<FString>& OutArray)
 {
 	OutArray = Data.GetComments();
 }
 
-#pragma region Property Getters/Setters
+#pragma region Global Property Getters/Setters
 
-void UIniLibrary::GetIniPropertyValueAsInt(FIniData& Data, FName SectionName, FName PropertyName, int32& OutValue)
+void UIniLibrary::GetPropertyValueAsInt(FIniData& Data, FName SectionName, FName PropertyName, int32& OutValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsInt(OutValue);
 }
 
-void UIniLibrary::GetIniPropertyValueAsInt64(FIniData& Data, FName SectionName, FName PropertyName, int64& OutValue)
+void UIniLibrary::GetPropertyValueAsInt64(FIniData& Data, FName SectionName, FName PropertyName, int64& OutValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsInt64(OutValue);
 }
 
-void UIniLibrary::GetIniPropertyValueAsBoolean(FIniData& Data, FName SectionName, FName PropertyName, bool& OutValue)
+void UIniLibrary::GetPropertyValueAsBoolean(FIniData& Data, FName SectionName, FName PropertyName, bool& OutValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsBoolean(OutValue);
 }
 
-void UIniLibrary::GetIniPropertyValueAsFloat(FIniData& Data, FName SectionName, FName PropertyName, float& OutValue)
+void UIniLibrary::GetPropertyValueAsFloat(FIniData& Data, FName SectionName, FName PropertyName, float& OutValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsFloat(OutValue);
 }
 
-void UIniLibrary::GetIniPropertyValueAsDouble(FIniData& Data, FName SectionName, FName PropertyName, double& OutValue)
+void UIniLibrary::GetPropertyValueAsDouble(FIniData& Data, FName SectionName, FName PropertyName, double& OutValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsDouble(OutValue);
 }
 
-void UIniLibrary::GetIniPropertyValueAsVector(FIniData& Data, FName SectionName, FName PropertyName, FVector& OutConvertedVector, bool& OutIsValid)
+void UIniLibrary::GetPropertyValueAsVector(FIniData& Data, FName SectionName, FName PropertyName, FVector& OutConvertedVector, bool& OutIsValid)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsVector(OutConvertedVector, OutIsValid);
 }
 
-void UIniLibrary::GetIniPropertyValueAsVector3f(FIniData& Data, FName SectionName, FName PropertyName, FVector3f& OutConvertedVector, bool& OutIsValid)
+void UIniLibrary::GetPropertyValueAsVector3f(FIniData& Data, FName SectionName, FName PropertyName, FVector3f& OutConvertedVector, bool& OutIsValid)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsVector3f(OutConvertedVector, OutIsValid);
 }
 
-void UIniLibrary::GetIniPropertyValueAsVector2D(FIniData& Data, FName SectionName, FName PropertyName, FVector2D& OutConvertedVector2D, bool& OutIsValid)
+void UIniLibrary::GetPropertyValueAsVector2D(FIniData& Data, FName SectionName, FName PropertyName, FVector2D& OutConvertedVector2D, bool& OutIsValid)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsVector2D(OutConvertedVector2D, OutIsValid);
 }
 
-void UIniLibrary::GetIniPropertyValueAsRotator(FIniData& Data, FName SectionName, FName PropertyName, FRotator& OutConvertedRotator, bool& OutIsValid)
+void UIniLibrary::GetPropertyValueAsRotator(FIniData& Data, FName SectionName, FName PropertyName, FRotator& OutConvertedRotator, bool& OutIsValid)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsRotator(OutConvertedRotator, OutIsValid);
 }
 
-void UIniLibrary::GetIniPropertyValueAsLinearColor(FIniData& Data, FName SectionName, FName PropertyName, FLinearColor& OutConvertedColor, bool& OutIsValid)
+void UIniLibrary::GetPropertyValueAsLinearColor(FIniData& Data, FName SectionName, FName PropertyName, FLinearColor& OutConvertedColor, bool& OutIsValid)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.GetValueAsColor(OutConvertedColor, OutIsValid);
 }
 
-void UIniLibrary::GetIniPropertyValueAsName(FIniData& Data, FName SectionName, FName PropertyName, FName& OutValue)
+void UIniLibrary::GetPropertyValueAsName(FIniData& Data, FName SectionName, FName PropertyName, FName& OutValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	OutValue = Prop.GetValueAsName();
 }
 
-void UIniLibrary::GetIniPropertyValueAsText(FIniData& Data, FName SectionName, FName PropertyName, FText& OutValue)
+void UIniLibrary::GetPropertyValueAsText(FIniData& Data, FName SectionName, FName PropertyName, FText& OutValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	OutValue = FText::FromString(Prop.GetValueAsRawString());
 }
 
-void UIniLibrary::GetIniPropertyValueAsString(FIniData& Data, FName SectionName, FName PropertyName, FString& OutValue)
+void UIniLibrary::GetPropertyValueAsString(FIniData& Data, FName SectionName, FName PropertyName, FString& OutValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	OutValue = Prop.GetValueAsRawString();
 }
 
-void UIniLibrary::SetIniPropertyValueAsString(FIniData& Data, FName SectionName, FName PropertyName, FString NewValue)
+void UIniLibrary::SetPropertyValueAsString(FIniData& Data, FName SectionName, FName PropertyName, FString NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsString(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsText(FIniData& Data, FName SectionName, FName PropertyName, FText NewValue)
+void UIniLibrary::SetPropertyValueAsText(FIniData& Data, FName SectionName, FName PropertyName, FText NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsText(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsName(FIniData& Data, FName SectionName, FName PropertyName, FName NewValue)
+void UIniLibrary::SetPropertyValueAsName(FIniData& Data, FName SectionName, FName PropertyName, FName NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsName(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsObject(FIniData& Data, FName SectionName, FName PropertyName, UObject* NewValue)
+void UIniLibrary::SetPropertyValueAsObject(FIniData& Data, FName SectionName, FName PropertyName, UObject* NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsObject(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsByte(FIniData& Data, FName SectionName, FName PropertyName, uint8 NewValue)
+void UIniLibrary::SetPropertyValueAsByte(FIniData& Data, FName SectionName, FName PropertyName, uint8 NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsByte(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsInt(FIniData& Data, FName SectionName, FName PropertyName, int32 NewValue)
+void UIniLibrary::SetPropertyValueAsInt(FIniData& Data, FName SectionName, FName PropertyName, int32 NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsInt(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsInt64(FIniData& Data, FName SectionName, FName PropertyName, int64 NewValue)
+void UIniLibrary::SetPropertyValueAsInt64(FIniData& Data, FName SectionName, FName PropertyName, int64 NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsInt64(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsIntPoint(FIniData& Data, FName SectionName, FName PropertyName, FIntPoint NewValue)
+void UIniLibrary::SetPropertyValueAsIntPoint(FIniData& Data, FName SectionName, FName PropertyName, FIntPoint NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsIntPoint(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsBool(FIniData& Data, FName SectionName, FName PropertyName, bool bNewValue)
+void UIniLibrary::SetPropertyValueAsBool(FIniData& Data, FName SectionName, FName PropertyName, bool bNewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsBoolean(bNewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsFloat(FIniData& Data, FName SectionName, FName PropertyName, float NewValue)
+void UIniLibrary::SetPropertyValueAsFloat(FIniData& Data, FName SectionName, FName PropertyName, float NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsFloat(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsDouble(FIniData& Data, FName SectionName, FName PropertyName, double NewValue)
+void UIniLibrary::SetPropertyValueAsDouble(FIniData& Data, FName SectionName, FName PropertyName, double NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsDouble(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsVector(FIniData& Data, FName SectionName, FName PropertyName, FVector NewValue)
+void UIniLibrary::SetPropertyValueAsVector(FIniData& Data, FName SectionName, FName PropertyName, FVector NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsVector(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsVector2D(FIniData& Data, FName SectionName, FName PropertyName, FVector2D NewValue)
+void UIniLibrary::SetPropertyValueAsVector2D(FIniData& Data, FName SectionName, FName PropertyName, FVector2D NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsVector2D(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsVector3f(FIniData& Data, FName SectionName, FName PropertyName, FVector3f NewValue)
+void UIniLibrary::SetPropertyValueAsVector3f(FIniData& Data, FName SectionName, FName PropertyName, FVector3f NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsVector3f(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsIntVector(FIniData& Data, FName SectionName, FName PropertyName, FIntVector NewValue)
+void UIniLibrary::SetPropertyValueAsIntVector(FIniData& Data, FName SectionName, FName PropertyName, FIntVector NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsIntVector(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsRotator(FIniData& Data, FName SectionName, FName PropertyName, FRotator NewValue)
+void UIniLibrary::SetPropertyValueAsRotator(FIniData& Data, FName SectionName, FName PropertyName, FRotator NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsRotator(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsMatrix(FIniData& Data, FName SectionName, FName PropertyName, FMatrix NewValue)
+void UIniLibrary::SetPropertyValueAsMatrix(FIniData& Data, FName SectionName, FName PropertyName, FMatrix NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsMatrix(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsTransform(FIniData& Data, FName SectionName, FName PropertyName, FTransform NewValue)
+void UIniLibrary::SetPropertyValueAsTransform(FIniData& Data, FName SectionName, FName PropertyName, FTransform NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsTransform(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsLinearColor(FIniData& Data, FName SectionName, FName PropertyName, FLinearColor NewValue)
+void UIniLibrary::SetPropertyValueAsLinearColor(FIniData& Data, FName SectionName, FName PropertyName, FLinearColor NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsColor(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsInputDeviceId(FIniData& Data, FName SectionName, FName PropertyName, FInputDeviceId NewValue)
+void UIniLibrary::SetPropertyValueAsInputDeviceId(FIniData& Data, FName SectionName, FName PropertyName, FInputDeviceId NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
 	Prop.SetValueAsInputDeviceId(NewValue);
 }
 
-void UIniLibrary::SetIniPropertyValueAsPlatformUserId(FIniData& Data, FName SectionName, FName PropertyName, FPlatformUserId NewValue)
+void UIniLibrary::SetPropertyValueAsPlatformUserId(FIniData& Data, FName SectionName, FName PropertyName, FPlatformUserId NewValue)
 {
 	auto& Sect = Data.GetSection(SectionName);
 	auto& Prop = Sect.GetProperty(PropertyName);
+	Prop.SetValueAsPlatformUserId(NewValue);
+}
+
+#pragma endregion
+
+#pragma region Property Getters/Setters
+
+void UIniLibrary::GetGlobalPropertyValueAsInt(FIniData& Data, FName PropertyName, int32& OutValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsInt(OutValue);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsInt64(FIniData& Data, FName PropertyName, int64& OutValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsInt64(OutValue);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsBoolean(FIniData& Data, FName PropertyName, bool& OutValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsBoolean(OutValue);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsFloat(FIniData& Data, FName PropertyName, float& OutValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsFloat(OutValue);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsDouble(FIniData& Data, FName PropertyName, double& OutValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsDouble(OutValue);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsVector(FIniData& Data, FName PropertyName, FVector& OutConvertedVector, bool& OutIsValid)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsVector(OutConvertedVector, OutIsValid);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsVector3f(FIniData& Data, FName PropertyName, FVector3f& OutConvertedVector, bool& OutIsValid)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsVector3f(OutConvertedVector, OutIsValid);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsVector2D(FIniData& Data, FName PropertyName, FVector2D& OutConvertedVector2D, bool& OutIsValid)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsVector2D(OutConvertedVector2D, OutIsValid);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsRotator(FIniData& Data, FName PropertyName, FRotator& OutConvertedRotator, bool& OutIsValid)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsRotator(OutConvertedRotator, OutIsValid);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsLinearColor(FIniData& Data, FName PropertyName, FLinearColor& OutConvertedColor, bool& OutIsValid)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.GetValueAsColor(OutConvertedColor, OutIsValid);
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsName(FIniData& Data, FName PropertyName, FName& OutValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	OutValue = Prop.GetValueAsName();
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsText(FIniData& Data, FName PropertyName, FText& OutValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	OutValue = FText::FromString(Prop.GetValueAsRawString());
+}
+
+void UIniLibrary::GetGlobalPropertyValueAsString(FIniData& Data, FName PropertyName, FString& OutValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	OutValue = Prop.GetValueAsRawString();
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsString(FIniData& Data, FName PropertyName, FString NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsString(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsText(FIniData& Data, FName PropertyName, FText NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsText(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsName(FIniData& Data, FName PropertyName, FName NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsName(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsObject(FIniData& Data, FName PropertyName, UObject* NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsObject(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsByte(FIniData& Data, FName PropertyName, uint8 NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsByte(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsInt(FIniData& Data, FName PropertyName, int32 NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsInt(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsInt64(FIniData& Data, FName PropertyName, int64 NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsInt64(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsIntPoint(FIniData& Data, FName PropertyName, FIntPoint NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsIntPoint(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsBool(FIniData& Data, FName PropertyName, bool bNewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsBoolean(bNewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsFloat(FIniData& Data, FName PropertyName, float NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsFloat(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsDouble(FIniData& Data, FName PropertyName, double NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsDouble(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsVector(FIniData& Data, FName PropertyName, FVector NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsVector(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsVector2D(FIniData& Data, FName PropertyName, FVector2D NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsVector2D(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsVector3f(FIniData& Data, FName PropertyName, FVector3f NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsVector3f(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsIntVector(FIniData& Data, FName PropertyName, FIntVector NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsIntVector(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsRotator(FIniData& Data, FName PropertyName, FRotator NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsRotator(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsMatrix(FIniData& Data, FName PropertyName, FMatrix NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsMatrix(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsTransform(FIniData& Data, FName PropertyName, FTransform NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsTransform(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsLinearColor(FIniData& Data, FName PropertyName, FLinearColor NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsColor(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsInputDeviceId(FIniData& Data, FName PropertyName, FInputDeviceId NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
+	Prop.SetValueAsInputDeviceId(NewValue);
+}
+
+void UIniLibrary::SetGlobalPropertyValueAsPlatformUserId(FIniData& Data, FName PropertyName, FPlatformUserId NewValue)
+{
+	auto& Prop = Data.GetProperty(PropertyName);
 	Prop.SetValueAsPlatformUserId(NewValue);
 }
 
