@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "0.2.0",
+	"VersionName": "0.3.2",
 	"FriendlyName": "IniParser",
 	"Description": "Read/Write an .Ini file the unreal way!",
 	"Category": "Other",
